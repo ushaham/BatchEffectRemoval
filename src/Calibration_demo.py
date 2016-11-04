@@ -121,9 +121,9 @@ else: # space = 'data'
     mmdNetInput_test = source_test
     del target, target_test, source, source_test    
 
-#############################
+################################
 ######## train MMD-ResNet ######
-#############################
+################################
 
 #Define net configuration
 mmdNetLayerSizes = [25, 25, 8]
