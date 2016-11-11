@@ -132,17 +132,20 @@ l2_penalty2 = 0e-2
 init = 'zero' 
 dropoutProb = .25
 calibInput = Input(shape=(space_dim,))
-Ax = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(calibInput) 
+shortcut1 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(calibInput) 
+hidden1 = Dense(mmdNetLayerSizes[0], activation='relu',W_regularizer=l2(l2_penalty2), init = init)(calibInput) 
+hidden1_do = Dropout(dropoutProb)(hidden1)
+hidden2 = Dense(space_dim, activation='relu',W_regularizer=l2(l2_penalty2), init = init)(hidden1_do)
+hidden2_do = Dropout(dropoutProb)(hidden2)
+layer2 = merge([shortcut1, hidden2_do], mode = 'sum')
+shortcut2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(layer2) 
+hidden3 = Dense(mmdNetLayerSizes[1], activation='relu',W_regularizer=l2(l2_penalty2), init = init)(layer2)
+hidden4 = Dense(space_dim, activation='relu',W_regularizer=l2(l2_penalty2), init = init)(hidden3)
+outputLayer = merge([shortcut2, hidden4], mode = 'sum')
 
-calibHidden1 = Dense(mmdNetLayerSizes[0], activation='relu',W_regularizer=l2(l2_penalty2), init = init)(calibInput) 
-calibHidden1_dr = Dropout(dropoutProb)(calibHidden1)
-calibHidden2 = Dense(mmdNetLayerSizes[1], activation='relu',W_regularizer=l2(l2_penalty2), init = init)(calibHidden1_dr)
-calibHidden2_dr = Dropout(dropoutProb)(calibHidden2)
-calibHidden3 = Dense(mmdNetLayerSizes[2], activation='relu',W_regularizer=l2(l2_penalty2), init = init)(calibHidden2_dr) 
-resid = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty2), init = init)(calibHidden3)
-calibOutput = merge([resid, Ax], mode = 'sum')
+calibMMDNet = Model(input=calibInput, output=outputLayer)
 
-calibMMDNet = Model(input=calibInput, output=calibOutput)
+
 
 # learning rate schedule
 def step_decay(epoch):
@@ -157,7 +160,7 @@ lrate = LearningRateScheduler(step_decay)
 optimizer = keras.optimizers.adam(lr=0.0)
 
 calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
-               cf.MMD(calibOutput,mmdNetTarget_train,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+               cf.MMD(outputLayer,mmdNetTarget_train,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 
 calibMMDNet.fit(mmdNetInput_train,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(mmdNetInput_train, mmdNetTarget_train, calibMMDNet.predict),
@@ -248,8 +251,8 @@ plt.title('after calibration')
 sourceInds = np.random.randint(low=0, high = beforeCalib.shape[0], size = 1000)
 targetInds = np.random.randint(low=0, high = beforeCalib.shape[0], size = 1000)
 
-mmd_before = K.eval(cf.MMD(calibOutput,TargetData).cost(K.variable(value=beforeCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
-mmd_after = K.eval(cf.MMD(calibOutput,TargetData).cost(K.variable(value=afterCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
+mmd_before = K.eval(cf.MMD(outputLayer,TargetData).cost(K.variable(value=beforeCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
+mmd_after = K.eval(cf.MMD(outputLayer,TargetData).cost(K.variable(value=afterCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
 print('MMD before calibration: ' + str(mmd_before))
 print('MMD after calibration: ' + str(mmd_after))
 
