@@ -77,7 +77,7 @@ if space == 'code':
     code = Dense(encoderLayerSizes[2], activation='sigmoid',W_regularizer=l2(l2_penalty))(en_hidden2)
     de_hidden4 = Dense(encoderLayerSizes[1], activation=activation,W_regularizer=l2(l2_penalty))(code)
     de_hidden5 = Dense(encoderLayerSizes[0], activation=activation,W_regularizer=l2(l2_penalty))(de_hidden4)
-    recon = Dense(input_dim, activation='sigmoid',W_regularizer=l2(l2_penalty))(de_hidden5)
+    recon = Dense(input_dim, activation='linear',W_regularizer=l2(l2_penalty))(de_hidden5)
     autoencoder = Model(input=inputLayer, output=recon)
     #create encoder
     encoder = Model(input=inputLayer, output=code)
