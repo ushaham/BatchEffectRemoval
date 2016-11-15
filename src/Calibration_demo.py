@@ -253,7 +253,7 @@ plt.title('after calibration')
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
 sourceInds = np.random.randint(low=0, high = beforeCalib.shape[0], size = 1000)
-targetInds = np.random.randint(low=0, high = beforeCalib.shape[0], size = 1000)
+targetInds = np.random.randint(low=0, high = TargetData.shape[0], size = 1000)
 
 mmd_before = K.eval(cf.MMD(block2_output,TargetData).cost(K.variable(value=beforeCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
 mmd_after = K.eval(cf.MMD(block2_output,TargetData).cost(K.variable(value=afterCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
