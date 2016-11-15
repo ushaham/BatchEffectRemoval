@@ -8,8 +8,7 @@ import os.path
 import keras.optimizers
 from Calibration_Util import DataHandler as dh 
 from Calibration_Util import FileIO as io
-from Calibration_Util import Misc
-from keras.layers import Input, Dense, merge, Dropout
+from keras.layers import Input, Dense, merge, BatchNormalization, Activation
 from keras.models import Model
 from keras import callbacks as cb
 import numpy as np
@@ -130,20 +129,25 @@ mmdNetLayerSizes = [25, 25, 8]
 l2_penalty = 0e-2
 l2_penalty2 = 0e-2
 init = 'zero' 
-dropoutProb = .25
 calibInput = Input(shape=(space_dim,))
 shortcut1 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(calibInput) 
-hidden1 = Dense(mmdNetLayerSizes[0], activation='relu',W_regularizer=l2(l2_penalty2), init = init)(calibInput) 
-hidden1_do = Dropout(dropoutProb)(hidden1)
-hidden2 = Dense(space_dim, activation='relu',W_regularizer=l2(l2_penalty2), init = init)(hidden1_do)
-hidden2_do = Dropout(dropoutProb)(hidden2)
-layer2 = merge([shortcut1, hidden2_do], mode = 'sum')
-shortcut2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(layer2) 
-hidden3 = Dense(mmdNetLayerSizes[1], activation='relu',W_regularizer=l2(l2_penalty2), init = init)(layer2)
-hidden4 = Dense(space_dim, activation='relu',W_regularizer=l2(l2_penalty2), init = init)(hidden3)
-outputLayer = merge([shortcut2, hidden4], mode = 'sum')
+block1_bn1 = BatchNormalization()(calibInput)
+block1_a1 = Activation('relu')(block1_bn1)
+block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block1_a1) 
+block1_bn2 = BatchNormalization()(block1_w1)
+block1_a2 = Activation('relu')(block1_bn2)
+block1_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block1_a2) 
+block1_output = merge([block1_w2, shortcut1], mode = 'sum')
+shortcut2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(block1_output) 
+block2_bn1 = BatchNormalization()(block1_output)
+block2_a1 = Activation('relu')(block2_bn1)
+block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block2_a1) 
+block2_bn2 = BatchNormalization()(block2_w1)
+block2_a2 = Activation('relu')(block2_bn2)
+block2_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block2_a2) 
+block2_output = merge([block2_w2, shortcut2], mode = 'sum')
 
-calibMMDNet = Model(input=calibInput, output=outputLayer)
+calibMMDNet = Model(input=calibInput, output=block2_output)
 
 
 
@@ -160,7 +164,7 @@ lrate = LearningRateScheduler(step_decay)
 optimizer = keras.optimizers.adam(lr=0.0)
 
 calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
-               cf.MMD(outputLayer,mmdNetTarget_train,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+               cf.MMD(block2_output,mmdNetTarget_train,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 
 calibMMDNet.fit(mmdNetInput_train,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(mmdNetInput_train, mmdNetTarget_train, calibMMDNet.predict),
@@ -251,8 +255,8 @@ plt.title('after calibration')
 sourceInds = np.random.randint(low=0, high = beforeCalib.shape[0], size = 1000)
 targetInds = np.random.randint(low=0, high = beforeCalib.shape[0], size = 1000)
 
-mmd_before = K.eval(cf.MMD(outputLayer,TargetData).cost(K.variable(value=beforeCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
-mmd_after = K.eval(cf.MMD(outputLayer,TargetData).cost(K.variable(value=afterCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
+mmd_before = K.eval(cf.MMD(block2_output,TargetData).cost(K.variable(value=beforeCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
+mmd_after = K.eval(cf.MMD(block2_output,TargetData).cost(K.variable(value=afterCalib[sourceInds]), K.variable(value=TargetData[targetInds])))
 print('MMD before calibration: ' + str(mmd_before))
 print('MMD after calibration: ' + str(mmd_after))
 
