@@ -24,6 +24,7 @@ import math
 from keras import backend as K
 import ScatterHist as sh
 from statsmodels.distributions.empirical_distribution import ECDF
+from keras import initializations
 
 # space
 space = 'data' # whether or not we want to train an autoencoder
@@ -128,24 +129,23 @@ else: # space = 'data'
 mmdNetLayerSizes = [25, 25, 8]
 l2_penalty = 0e-2
 l2_penalty2 = 0e-2
-init = 'zero' 
+init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
+# init = 'glorot_normal' # works if the network is much wider 
 calibInput = Input(shape=(space_dim,))
-shortcut1 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(calibInput) 
 block1_bn1 = BatchNormalization()(calibInput)
 block1_a1 = Activation('relu')(block1_bn1)
 block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block1_a1) 
 block1_bn2 = BatchNormalization()(block1_w1)
 block1_a2 = Activation('relu')(block1_bn2)
 block1_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block1_a2) 
-block1_output = merge([block1_w2, shortcut1], mode = 'sum')
-shortcut2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(block1_output) 
+block1_output = merge([block1_w2, calibInput], mode = 'sum')
 block2_bn1 = BatchNormalization()(block1_output)
 block2_a1 = Activation('relu')(block2_bn1)
 block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block2_a1) 
 block2_bn2 = BatchNormalization()(block2_w1)
 block2_a2 = Activation('relu')(block2_bn2)
 block2_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block2_a2) 
-block2_output = merge([block2_w2, shortcut2], mode = 'sum')
+block2_output = merge([block2_w2, block1_output], mode = 'sum')
 
 calibMMDNet = Model(input=calibInput, output=block2_output)
 
