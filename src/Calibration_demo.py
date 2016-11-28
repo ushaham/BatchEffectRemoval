@@ -27,7 +27,7 @@ from statsmodels.distributions.empirical_distribution import ECDF
 from keras import initializations
 
 # space
-space = 'data' # whether or not we want to train an autoencoder
+space = 'code' # whether or not we want to train an autoencoder
 
 ######################
 ###### get data ######
@@ -62,64 +62,12 @@ target, target_test, source, source_test = dh.standard_scale(target, target_test
     
 input_dim = target.shape[1]
 
-if space == 'code':
-    ######################
-    ###### train AE ######
-    ######################
-    
-    #create Autoencoder
-    encoderLayerSizes = [40,20,12]
-    encoding_dim = encoderLayerSizes[-1]
-    activation='softplus'
-    l2_penalty = 1e-4
-    inputLayer = Input(shape=(input_dim,))
-    en_hidden1 = Dense(encoderLayerSizes[0], activation=activation,W_regularizer=l2(l2_penalty))(inputLayer)
-    en_hidden2 = Dense(encoderLayerSizes[1], activation=activation,W_regularizer=l2(l2_penalty))(en_hidden1)
-    code = Dense(encoderLayerSizes[2], activation='sigmoid',W_regularizer=l2(l2_penalty))(en_hidden2)
-    de_hidden4 = Dense(encoderLayerSizes[1], activation=activation,W_regularizer=l2(l2_penalty))(code)
-    de_hidden5 = Dense(encoderLayerSizes[0], activation=activation,W_regularizer=l2(l2_penalty))(de_hidden4)
-    recon = Dense(input_dim, activation='linear',W_regularizer=l2(l2_penalty))(de_hidden5)
-    autoencoder = Model(input=inputLayer, output=recon)
-    #create encoder
-    encoder = Model(input=inputLayer, output=code)
-    #create decoder
-    encoded_input = Input(shape=(encoding_dim,))
-    de_hidden4 = autoencoder.layers[-3](encoded_input)
-    de_hidden5 = autoencoder.layers[-2](de_hidden4)
-    recon = autoencoder.layers[-1](de_hidden5)
-    decoder = Model(input=encoded_input, output=recon)
-    #train the autoencoder
-    autoencoder.compile(optimizer='adam', loss='mse')
-    autoencoder.fit(target, target, nb_epoch=200, batch_size=128, shuffle=True,  validation_split=0.1,
-                    callbacks=[mn.monitor(), cb.EarlyStopping(monitor='val_loss', patience=10,  mode='auto')])    
-    #Map data to code space
-    mmdNetTarget_train = encoder.predict(target)
-    mmdNetTarget_test = encoder.predict(target_test)
-    mmdNetInput_train=encoder.predict(source)
-    mmdNetInput_test=encoder.predict(source_test)
-    space_dim = encoding_dim
-    # plot reconstructions
-    plt.subplot(211)
-    plt.scatter(target[:,0], target[:,1], color = 'blue', s=6)
-    plt.title("test data")
-    axes = plt.gca()
-    axes.set_xlim([0,1])
-    axes.set_ylim([0,1])
-    plt.subplot(212)
-    x_test_recon = decoder.predict(encoder.predict(target))
-    plt.scatter(x_test_recon[:,0], x_test_recon[:,1], color='red', s=6)
-    plt.title("test reconstruction")
-    axes = plt.gca()
-    axes.set_xlim([0,1])
-    axes.set_ylim([0,1])
-    plt.draw()
-else: # space = 'data'
-    space_dim = input_dim
-    mmdNetTarget_train = target
-    mmdNetTarget_test = target_test
-    mmdNetInput_train = source
-    mmdNetInput_test = source_test
-    del target, target_test, source, source_test    
+space_dim = input_dim
+mmdNetTarget_train = target
+mmdNetTarget_test = target_test
+mmdNetInput_train = source
+mmdNetInput_test = source_test
+del target, target_test, source, source_test    
 
 ################################
 ######## train MMD-ResNet ######
@@ -128,23 +76,26 @@ else: # space = 'data'
 #Define net configuration
 mmdNetLayerSizes = [25, 25, 8]
 l2_penalty = 0e-2
-l2_penalty2 = 0e-2
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
 # init = 'glorot_normal' # works if the network is much wider 
 calibInput = Input(shape=(space_dim,))
+#shortcut1 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(calibInput) 
 block1_bn1 = BatchNormalization()(calibInput)
 block1_a1 = Activation('relu')(block1_bn1)
-block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block1_a1) 
+block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a1) 
 block1_bn2 = BatchNormalization()(block1_w1)
 block1_a2 = Activation('relu')(block1_bn2)
-block1_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block1_a2) 
+block1_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a2) 
+#block1_output = merge([block1_w2, shortcut1], mode = 'sum')
 block1_output = merge([block1_w2, calibInput], mode = 'sum')
+#shortcut2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = 'identity')(block1_output) 
 block2_bn1 = BatchNormalization()(block1_output)
 block2_a1 = Activation('relu')(block2_bn1)
-block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block2_a1) 
+block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a1) 
 block2_bn2 = BatchNormalization()(block2_w1)
 block2_a2 = Activation('relu')(block2_bn2)
-block2_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty2), init = init)(block2_a2) 
+block2_w2 = Dense(space_dim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a2) 
+#block2_output = merge([block2_w2, shortcut2], mode = 'sum')
 block2_output = merge([block2_w2, block1_output], mode = 'sum')
 
 calibMMDNet = Model(input=calibInput, output=block2_output)
@@ -154,7 +105,7 @@ calibMMDNet = Model(input=calibInput, output=block2_output)
 # learning rate schedule
 def step_decay(epoch):
     initial_lrate = 0.01
-    drop = 0.1
+    drop = 0.95
     epochs_drop = 5.0
     lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
     return lrate
@@ -179,10 +130,6 @@ if space == 'data':
     TargetData = mmdNetTarget_train
     beforeCalib = mmdNetInput_train
     afterCalib = calibMMDNet.predict(mmdNetInput_train)
-else:     # space = 'code'
-    TargetData = decoder.predict(mmdNetTarget_train)
-    beforeCalib = decoder.predict(mmdNetInput_train)
-    afterCalib = decoder.predict(calibMMDNet.predict(mmdNetInput_train))
 
 ##################################### qualitative evaluation: PCA #####################################
 pca = decomposition.PCA()
