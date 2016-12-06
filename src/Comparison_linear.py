@@ -7,16 +7,14 @@ Created on Sep 15, 2016
 
 import os.path
 import keras.optimizers
-from Calibration_Util import DataHandler as dh 
 from Calibration_Util import FileIO as io
 from Calibration_Util import Misc
-from keras.layers import Input, Dense, merge, Dropout
+from Calibration_Util import DataHandler as dh 
 from keras.models import Model
 from keras import callbacks as cb
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib import pyplot as plt
 import CostFunctions as cf
 import Monitoring as mn
 from keras.regularizers import l2
@@ -58,6 +56,11 @@ sampleBPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2.csv')
 source = genfromtxt(sampleAPath, delimiter=',', skip_header=0)
 target = genfromtxt(sampleBPath, delimiter=',', skip_header=0)
 
+# pre-process data: log transformation, a standard practice with CyTOF data
+target = dh.preProcessCytofData(target)
+source = dh.preProcessCytofData(source) 
+
+
 numZerosOK=1
 toKeepS = np.sum((source==0), axis = 1) <=numZerosOK
 print(np.sum(toKeepS))
@@ -74,7 +77,7 @@ if denoise:
     decoded = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty_ae))(encoded)
     autoencoder = Model(input=input_cell, output=decoded)
     autoencoder.compile(optimizer='adam', loss='mse')
-    autoencoder.fit(trainData_ae, trainTarget_ae, nb_epoch=200, batch_size=128, shuffle=True,  validation_split=0.1,
+    autoencoder.fit(trainData_ae, trainTarget_ae, nb_epoch=500, batch_size=128, shuffle=True,  validation_split=0.1,
                     callbacks=[mn.monitor(), cb.EarlyStopping(monitor='val_loss', patience=10,  mode='auto')])    
     source = autoencoder.predict(source)
     target = autoencoder.predict(target)
@@ -107,8 +110,8 @@ print('scales: ', scales)
 print('MMD(target,target): ', TT)
 print('MMD(after calibration, target): ', OT_Z)
 
-# MMD(target,target):              [ 0.04468636  0.04473211  0.0377084   0.01835019]
-# MMD(after calibration, target):  [ 0.04655762  0.07034409  0.07571652  0.02227357]
+# MMD(target,target):              [ 0.04481616  0.04474987  0.04029125  0.01990965]
+# MMD(after calibration, target):  [ 0.05656361  0.06639165  0.11051335  0.04295943]
 
 ### 
 pca = decomposition.PCA()
@@ -155,8 +158,8 @@ TT, OT_pca, ratios = Misc.checkScales(target_train_pca, source_train_pca, scales
 print('scales: ', scales)
 print('MMD(target,target): ', TT)
 print('MMD(after calibration,target): ', OT_pca)
-# MMD(target,target):             [ 0.04453892  0.04346298  0.04182024  0.01648208]
-# MMD(after calibration,target):  [ 0.04740933  0.11866774  0.16063778  0.07313088]
+# MMD(target,target):             [ 0.04424336  0.04437481  0.03502314  0.01841931]
+# MMD(after calibration,target):  [ 0.05652664  0.08449574  0.18398013  0.11810181]
 
 ### 
 pca = decomposition.PCA()
@@ -168,7 +171,7 @@ projection_after = pca.transform(source_train_pca)
 
 pc1 = 0
 pc2 = 1
-#sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
+sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after[:,pc1], projection_after[:,pc2])
 
 
