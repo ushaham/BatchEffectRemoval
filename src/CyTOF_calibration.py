@@ -186,16 +186,13 @@ NA = np.linalg.norm(FA, 'fro')
 print('norm before calibration: ', str(NB))
 print('norm after calibration: ', str(NA)) 
 
-m1 = np.max(np.abs(FB))
-m2 = np.max(np.abs(FA))
-m = max(m1, m2)
-from  matplotlib.pyplot import cm
-fig, ax = plt.subplots()
-heatmap = ax.pcolor(FB, cmap=cm.Reds, vmin=-m, vmax=m)
-plt.title('before calibration')
-fig, ax = plt.subplots()
-heatmap = ax.pcolor(FA, cmap=cm.Reds, vmin=-m, vmax=m)
-plt.title('after calibration')
+fa = FA.flatten()
+fb = FB.flatten()
+
+plt.hist(fb, bins = 20, normed=True, stacked = True)
+plt.hist(fa, bins=20, normed=True, stacked = True)
+plt.legend(['before calibration', 'after calibration'], loc=2)
+plt.show()
 
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
