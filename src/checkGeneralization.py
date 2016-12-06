@@ -6,10 +6,8 @@ Created on Sep 13, 2016
 
 import os.path
 import keras.optimizers
-from Calib_Util import DataHandler as dh 
-from Calib_Util import FileIO as io
-from Calib_Util import Misc
-from keras.layers import Input, Dense, merge, Dropout
+from Calibration_Util import DataHandler as dh 
+from Calibration_Util import FileIO as io
 from keras.models import Model
 from keras import callbacks as cb
 import numpy as np
