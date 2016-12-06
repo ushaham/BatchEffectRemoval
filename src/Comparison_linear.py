@@ -223,8 +223,8 @@ TT, OT_fullNet, ratios = Misc.checkScales(target, calibratedSource, scales, nIte
 print('scales: ', scales)
 print('MMD(target,target): ', TT)
 print('MMD(after calibration, target): ', OT_fullNet)
-#MMD(target,target):              [ 0.04472091  0.04506061  0.04096356  0.01826212]
-#MMD(after calibration, target):  [ 0.04665827  0.05394157  0.05176455  0.02817073]
+#MMD(target,target):              [ 0.04440335  0.0442343   0.03732886  0.02267724]
+#MMD(after calibration, target):  [ 0.05683116  0.05906311  0.0479396   0.0240008 ]
 
 ### 
 pca = decomposition.PCA()
