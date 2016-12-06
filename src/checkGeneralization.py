@@ -139,7 +139,7 @@ calibMMDNet_1.compile(optimizer=optimizer, loss=lambda y_true,y_pred:
 sourceLabels = np.zeros(source1.shape[0])
 calibMMDNet_1.fit(source1, sourceLabels[:source1.shape[0]],nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(source1, target1, calibMMDNet_1.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=20,mode='auto')])
+                      cb.EarlyStopping(monitor='val_loss',patience=25,mode='auto')])
 
 
 # second net
@@ -150,9 +150,9 @@ block1_w1_2 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2
 block1_bn2_2 = BatchNormalization()(block1_w1_2)
 block1_a2_2 = Activation('relu')(block1_bn2_2)
 block1_w2_2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a2_2) 
-block1_output_2 = merge([block1_w2_1, calibInput_2], mode = 'sum')
+block1_output_2 = merge([block1_w2_2, calibInput_2], mode = 'sum')
 block2_bn1_2 = BatchNormalization()(block1_output_2)
-block2_a1_2 = Activation('relu')(block2_bn1_1)
+block2_a1_2 = Activation('relu')(block2_bn1_2)
 block2_w1_2 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a1_2) 
 block2_bn2_2 = BatchNormalization()(block2_w1_2)
 block2_a2_2 = Activation('relu')(block2_bn2_2)
@@ -164,9 +164,9 @@ optimizer = keras.optimizers.rmsprop(lr=0.0)
 calibMMDNet_2.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
                cf.MMD(block2_output_2,target2,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source2.shape[0])
-calibMMDNet_1.fit(source2, sourceLabels[:source2.shape[0]],nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
+calibMMDNet_2.fit(source2, sourceLabels[:source2.shape[0]],nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(source2, target2, calibMMDNet_2.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=20,mode='auto')])
+                      cb.EarlyStopping(monitor='val_loss',patience=25,mode='auto')])
 
 
 
@@ -252,13 +252,13 @@ print('patient 2: MMD after calibration (net b): ' + str(mmd_after_b2))
 print('patient 2: MMD after calibration (net a): ' + str(mmd_after_a2))
 
 '''
-patient 1: MMD before calibration: 0.377964
-patient 1: MMD after calibration (net a): 0.14309
-patient 1: MMD after calibration (net b): 0.147311
+patient 1: MMD before calibration:  0.751474
+patient 1: MMD after calibration (net a): 0.326444
+patient 1: MMD after calibration (net b): 0.37294
 
-patient 2: MMD before calibration: 0.431609
-patient 2: MMD after calibration (net b): 0.15522
-patient 2: MMD after calibration (net a): 0.156867
+patient 2: MMD before calibration: 0.651312
+patient 2: MMD after calibration (net b): 0.391193
+patient 2: MMD after calibration (net a): 0.428735
 
 
 '''
