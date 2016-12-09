@@ -1,6 +1,6 @@
 # Calibration
 
-Script for the paper "Removal of Batch Effects using Distribution-Matching ResidualNetworks" by Uri Shaham, Kelly P. Stanton, Jun Zhao, Huamin Li, Ruth Montgomery, and Yuval Kluger
+Script for the paper "Removal of Batch Effects using Distribution-Matching Residual Networks" by Uri Shaham, Kelly P. Stanton, Jun Zhao, Huamin Li, Khadir Raddassi, Ruth Montgomery, and Yuval Kluger
 
 The script CyTOF_calibration.py loads two CyTOF datasets, corresponding to measurements of blood of the same person on the same machine in two different days. The script trains a MMD-ResNet using one of the datasets as source and the other as target, to remove the batch effects. once the net is trained, the results are evaluated. It produces the results described in Section 4.2.1.
 
