@@ -74,7 +74,7 @@ if denoise:
     encoded = Dense(ae_encodingDim, activation='relu',W_regularizer=l2(l2_penalty_ae))(input_cell)
     decoded = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty_ae))(encoded)
     autoencoder = Model(input=input_cell, output=decoded)
-    autoencoder.compile(optimizer='adam', loss='mse')
+    autoencoder.compile(optimizer='rmsprop', loss='mse')
     autoencoder.fit(trainData_ae, trainTarget_ae, nb_epoch=500, batch_size=128, shuffle=True,  validation_split=0.1,
                     callbacks=[mn.monitor(), cb.EarlyStopping(monitor='val_loss', patience=25,  mode='auto')])    
     source = autoencoder.predict(source)
@@ -195,8 +195,9 @@ f[:,0] = fb
 f[:,1] = fa
 
 fig = plt.figure()
-plt.hist(f, bins = 10, normed=True, histtype='bar')
+plt.hist(f, bins = 20, normed=True, histtype='bar')
 plt.legend(['before calib.', 'after calib.'], loc=1)
+plt.yticks([])
 plt.show()
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 

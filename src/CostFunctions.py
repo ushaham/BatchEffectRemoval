@@ -33,7 +33,7 @@ class MMD:
                  MMDTargetTrain,
                  MMDTargetValidation_split=0.1,
                  MMDTargetSampleSize=1000,
-                 n_neighbors = 20,
+                 n_neighbors = 40,
                  scales = None,
                  weights = None):
         if scales == None:

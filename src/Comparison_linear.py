@@ -27,6 +27,8 @@ import sklearn.preprocessing as prep
 from keras import initializations
 from keras.layers import Input, Dense, merge, Activation
 from keras.layers.normalization import BatchNormalization
+from keras.callbacks import History 
+
 
 
 # configuration hyper parameters
@@ -155,7 +157,14 @@ block2_output = merge([block2_w2, block1_output], mode = 'sum')
 
 calibMMDNet = Model(input=calibInput, output=block2_output)
 
-# learning rate schedule
+
+#train MMD net
+optimizer = keras.optimizers.rmsprop(lr=0.0)
+
+calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
+               cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+sourceLabels = np.zeros(source.shape[0])
+
 def step_decay(epoch):
     initial_lrate = 0.01
     drop = 0.5
@@ -164,15 +173,11 @@ def step_decay(epoch):
     return lrate
 lrate = LearningRateScheduler(step_decay)
 
-#train MMD net
-optimizer = keras.optimizers.rmsprop(lr=0.0)
 
-calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
-               cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
-sourceLabels = np.zeros(source.shape[0])
+history = History()
 calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
+                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto'), history])
 
 resNetCalibratedSource = calibMMDNet.predict(source)
 
