@@ -258,15 +258,15 @@ print('patient 2: MMD to target2 after calibration (net a): ' + str(mmd_after_a2
 print('patient 2: MMD to target1 after calibration (net a): ' + str(mmd_after_a21))
 
 '''
-patient 1: MMD before calibration: 0.694902
+patient 1: MMD to target1 before calibration: 0.694902
 patient 1: MMD to target1 after calibration (net a): 0.405069
 patient 1: MMD to target1 after calibration (net b): 0.397308
 patient 1: MMD to target2 after calibration (net b): 0.553272
 
-patient 2: MMD before calibration: 0.616888
-patient 2: MMD to target2 after calibration (net b): 0.355607
-patient 2: MMD to target2 after calibration (net a): 0.415497
-patient 2: MMD to target1 after calibration (net a): 0.404445
+patient 2: MMD to target2 before calibration: 0.767896
+patient 2: MMD to target2 after calibration (net b): 0.332747
+patient 2: MMD to target2 after calibration (net a): 0.551316
+patient 2: MMD to target1 after calibration (net a): 0.521795
 
 
 '''
