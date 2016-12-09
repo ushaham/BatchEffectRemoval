@@ -41,7 +41,7 @@ def scatterHist(x1,x2, y1,y2, axis1='', axis2=''):
 
 
     # now determine nice limits by hand:
-    binwidth = 0.25
+    binwidth = 0.5
     xymax = np.max([np.max(np.fabs(x1)), np.max(np.fabs(x2))])
     lim = (int(xymax/binwidth) + 1) * binwidth
     
