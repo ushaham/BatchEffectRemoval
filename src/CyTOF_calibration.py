@@ -80,9 +80,10 @@ if denoise:
     source = autoencoder.predict(source)
     target = autoencoder.predict(target)
 
-# rescale the data to have zero mean and unit variance
+# rescale source to have zero mean and unit variance
+# apply same transformation to the target
 preprocessor = prep.StandardScaler().fit(source)
-source = preprocessor.transform(source)  
+source = preprocessor.transform(source) 
 target = preprocessor.transform(target)    
 
 #############################
@@ -189,12 +190,14 @@ print('norm after calibration: ', str(NA))
 fa = FA.flatten()
 fb = FB.flatten()
 
-fig = plt.figure()
-plt.hist(fb, bins = 20, normed=True, stacked = True)
-plt.hist(fa, bins=20, normed=True, stacked = True)
-plt.legend(['before calibration', 'after calibration'], loc=2)
-plt.show()
+f = np.zeros((fa.shape[0],2))
+f[:,0] = fb
+f[:,1] = fa
 
+fig = plt.figure()
+plt.hist(f, bins = 10, normed=True, histtype='bar')
+plt.legend(['before calib.', 'after calib.'], loc=1)
+plt.show()
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
 sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
@@ -218,8 +221,8 @@ print('MMD(after calibration, target): ', OT_a)
 
 '''
  this script gave: 
-norm before calibration:  3.07646297984
-norm after calibration:  0.79411389277
+norm before calibration:  3.59862372511
+norm after calibration:  1.98529712509
 
 MMD before calibration: 0.721767
 MMD after calibration: 0.162444
