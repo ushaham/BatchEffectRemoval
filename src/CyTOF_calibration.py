@@ -189,6 +189,7 @@ print('norm after calibration: ', str(NA))
 fa = FA.flatten()
 fb = FB.flatten()
 
+fig = plt.figure()
 plt.hist(fb, bins = 20, normed=True, stacked = True)
 plt.hist(fa, bins=20, normed=True, stacked = True)
 plt.legend(['before calibration', 'after calibration'], loc=2)
