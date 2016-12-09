@@ -85,7 +85,9 @@ if denoise:
 # rescale the data to have zero mean and unit variance
 preprocessor = prep.StandardScaler().fit(source)
 source = preprocessor.transform(source)  
-target = preprocessor.transform(target)    
+target = preprocessor.transform(target)   
+
+ 
 
 
 ###############################################################
@@ -103,29 +105,6 @@ dim = target.shape[1]
 for i in range(dim):
     source_train_Z[:,i] = (source[:,i] - ms[i]) / np.sqrt(vs[i]) * np.sqrt(vt[i]) + mt[i]
     
-# MMD with the a single scale at a time, for various scales
-scales = [3e-1, 1e-0, 3e-0, 1e1]
-TT, OT_Z, ratios = Misc.checkScales(target, source_train_Z, scales, nIters = 10)
-print('scales: ', scales)
-print('MMD(target,target): ', TT)
-print('MMD(after calibration, target): ', OT_Z)
-
-# MMD(target,target):              [ 0.04481616  0.04474987  0.04029125  0.01990965]
-# MMD(after calibration, target):  [ 0.05656361  0.06639165  0.11051335  0.04295943]
-
-### 
-pca = decomposition.PCA()
-pca.fit(target)
-
-# project data onto PCs
-target_sample_pca = pca.transform(target)
-projection_before = pca.transform(source)
-projection_after = pca.transform(source_train_Z)
-
-pc1 = 0
-pc2 = 1
-sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
-sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after[:,pc1], projection_after[:,pc2])
 
 ##########################################
 ###### removing principal component ######
@@ -153,27 +132,6 @@ combinedDataRecon = np.dot(combinedData_proj[:,toTake], pca.components_[[toTake]
 target_train_pca = combinedDataRecon[:n_target,]
 source_train_pca = combinedDataRecon[n_target:,]
 # MMD with the a single scale at a time, for various scales
-scales = [3e-1, 1e-0, 3e-0, 1e1]
-TT, OT_pca, ratios = Misc.checkScales(target_train_pca, source_train_pca, scales, nIters = 10)
-print('scales: ', scales)
-print('MMD(target,target): ', TT)
-print('MMD(after calibration,target): ', OT_pca)
-# MMD(target,target):             [ 0.04424336  0.04437481  0.03502314  0.01841931]
-# MMD(after calibration,target):  [ 0.05652664  0.08449574  0.18398013  0.11810181]
-
-### 
-pca = decomposition.PCA()
-pca.fit(target)
-
-# project data onto PCs
-target_sample_pca = pca.transform(target_train_pca)
-projection_after = pca.transform(source_train_pca)
-
-pc1 = 0
-pc2 = 1
-sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
-sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after[:,pc1], projection_after[:,pc2])
-
 
 
 ####################
@@ -216,26 +174,56 @@ calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_spli
            callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet.predict),
                       cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
 
-calibratedSource = calibMMDNet.predict(source)
+resNetCalibratedSource = calibMMDNet.predict(source)
 
+
+##############################################
+############## Evaluation: MMD ###############
+##############################################
+# MMD with the a single scale at a time, for various scales
 scales = [3e-1, 1e-0, 3e-0, 1e1]
-TT, OT_fullNet, ratios = Misc.checkScales(target, calibratedSource, scales, nIters=10)
+TT, OT_Z, ratios = Misc.checkScales(target, source_train_Z, scales, nIters = 5)
+TT, OT_pca, ratios = Misc.checkScales(target_train_pca, source_train_pca, scales, nIters = 5)
+TT, OT_ResNet, ratios = Misc.checkScales(target, resNetCalibratedSource, scales, nIters=5)
+
+
 print('scales: ', scales)
 print('MMD(target,target): ', TT)
-print('MMD(after calibration, target): ', OT_fullNet)
-#MMD(target,target):              [ 0.04440335  0.0442343   0.03732886  0.02267724]
-#MMD(after calibration, target):  [ 0.05683116  0.05906311  0.0479396   0.0240008 ]
+print('calibration using matching of means and variances: MMD(after calibration, target): ', OT_Z)
+print('calibration by removing PC most correlated with the batch: MMD(after calibration, target): ', OT_pca)
+print('MMD(after calibration, target): ', OT_ResNet)
 
-### 
+
+# MMD(target,target):              [ 0.04481616  0.04474987  0.04029125  0.01990965]
+# MMD(after calibration, target):  [ 0.05656361  0.06639165  0.11051335  0.04295943]
+# MMD(after calibration,target):  [ 0.05652664  0.08449574  0.18398013  0.11810181]
+# MMD(after calibration,target):  [ 0.05652664  0.08449574  0.18398013  0.11810181]
+
+
+
+
+
+##############################################
+############## Evaluation: PCA ###############
+##############################################
 pca = decomposition.PCA()
 pca.fit(target)
 
 # project data onto PCs
 target_sample_pca = pca.transform(target)
 projection_before = pca.transform(source)
-projection_after = pca.transform(calibratedSource)
-
 pc1 = 0
 pc2 = 1
+
+projection_after_z = pca.transform(source_train_Z)
+target_after_pca = pca.transform(target_train_pca)
+projection_after_pca = pca.transform(source_train_pca)
+projection_after_net = pca.transform(resNetCalibratedSource)
+
+
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
-sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after[:,pc1], projection_after[:,pc2])
+sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_z[:,pc1], projection_after_z[:,pc2])
+sh.scatterHist(target_after_pca[:,pc1], target_after_pca[:,pc2], projection_after_pca[:,pc1], projection_after_pca[:,pc2])
+sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_net[:,pc1], projection_after_net[:,pc2])
+
+
