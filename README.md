@@ -8,7 +8,9 @@ The script Comparison_linear.py compares the performance of MMD-ResNet on CyTOF 
 
 The script checkGeneralization.py loads CyTOF data of two patients on the same machine, on two different days (each patient was measured on both days). We train a MMD-ResNet for each patient and then check how well it calibrates the data of the other patient. It produces the results described in Section 4.2.2. 
 
-The scripts of the RNA experiment are ommited from this github repository due to the size of the datasets. 
+The script CyTOF_calibration_noSkip_comparison has a comparison between MMD-ResNet and standard MLP on CyTOF data
+
+The scripts of the RNA experiment are omitted from this github repository due to the size of the datasets. 
 The data and scripts can be shared upon request. 
 
 All scripts are written in Keras.
