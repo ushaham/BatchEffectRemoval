@@ -69,8 +69,8 @@ target2 = genfromtxt(sample2BPath, delimiter=',', skip_header=0)
 # pre-process data: log transformation, a standard practice with CyTOF data
 target1 = dh.preProcessCytofData(target1)
 source1 = dh.preProcessCytofData(source1) 
-target2 = dh.preProcessCytofData(target1)
-source2 = dh.preProcessCytofData(source1) 
+target2 = dh.preProcessCytofData(target2)
+source2 = dh.preProcessCytofData(source2) 
 
 numZerosOK=1
 toKeepS1 = np.sum((source1==0), axis = 1) <=numZerosOK
@@ -234,10 +234,13 @@ targetInds = np.random.randint(low=0, high = target1.shape[0], size = 1000)
 mmd_before = K.eval(cf.MMD(source1,target1).cost(K.variable(value=source1[sourceInds]), K.variable(value=target1[targetInds])))
 mmd_after_a1 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_11[sourceInds]), K.variable(value=target1[targetInds])))
 mmd_after_b1 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_21[sourceInds]), K.variable(value=target1[targetInds])))
+mmd_after_b12 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_21[sourceInds]), K.variable(value=target2[targetInds])))
+
 
 print('patient 1: MMD before calibration: ' + str(mmd_before))
-print('patient 1: MMD after calibration (net a): ' + str(mmd_after_a1))
-print('patient 1: MMD after calibration (net b): ' + str(mmd_after_b1))
+print('patient 1: MMD to target1 after calibration (net a): ' + str(mmd_after_a1))
+print('patient 1: MMD to target1 after calibration (net b): ' + str(mmd_after_b1))
+print('patient 1: MMD to target2 after calibration (net b): ' + str(mmd_after_b12))
 
 sourceInds = np.random.randint(low=0, high = source2.shape[0], size = 1000)
 targetInds = np.random.randint(low=0, high = target2.shape[0], size = 1000)
@@ -246,19 +249,24 @@ targetInds = np.random.randint(low=0, high = target2.shape[0], size = 1000)
 mmd_before = K.eval(cf.MMD(source2,target2).cost(K.variable(value=source2[sourceInds]), K.variable(value=target2[targetInds])))
 mmd_after_a2 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=calibration_12[sourceInds]), K.variable(value=target2[targetInds])))
 mmd_after_b2 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=calibration_22[sourceInds]), K.variable(value=target2[targetInds])))
+mmd_after_a21 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=calibration_12[sourceInds]), K.variable(value=target1[targetInds])))
+
 
 print('patient 2: MMD before calibration: ' + str(mmd_before))
-print('patient 2: MMD after calibration (net b): ' + str(mmd_after_b2))
-print('patient 2: MMD after calibration (net a): ' + str(mmd_after_a2))
+print('patient 2: MMD to target2 after calibration (net b): ' + str(mmd_after_b2))
+print('patient 2: MMD to target2 after calibration (net a): ' + str(mmd_after_a2))
+print('patient 2: MMD to target1 after calibration (net a): ' + str(mmd_after_a21))
 
 '''
-patient 1: MMD before calibration:  0.751474
-patient 1: MMD after calibration (net a): 0.326444
-patient 1: MMD after calibration (net b): 0.37294
+patient 1: MMD before calibration: 0.744697
+patient 1: MMD to target1 after calibration (net a): 0.418814
+patient 1: MMD to target1 after calibration (net b): 0.399285
+patient 1: MMD to target2 after calibration (net b): 0.543763
 
-patient 2: MMD before calibration: 0.651312
-patient 2: MMD after calibration (net b): 0.391193
-patient 2: MMD after calibration (net a): 0.428735
+patient 2: MMD before calibration: 0.616888
+patient 2: MMD to target2 after calibration (net b): 0.355607
+patient 2: MMD to target2 after calibration (net a): 0.415497
+patient 2: MMD to target1 after calibration (net a): 0.404445
 
 
 '''
