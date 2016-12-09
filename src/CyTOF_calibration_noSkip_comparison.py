@@ -221,7 +221,7 @@ f[:,2] = fa_noSkip
 
 fig = plt.figure()
 plt.hist(f, bins = 10, normed=True, histtype='bar')
-plt.legend(['before calibration', 'calib. using ResNet', 'calib. using standard MLP'], loc=1)
+plt.legend(['before calibration', 'ResNet', 'standard MLP'], loc=1)
 plt.show()
 
 
