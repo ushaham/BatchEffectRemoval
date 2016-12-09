@@ -43,6 +43,7 @@ l2_penalty_ae = 1e-3
 mmdNetLayerSizes = [25, 25]
 l2_penalty = 5e-3
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
+init_ns = 'glorot_normal'
 
 
 ######################
@@ -81,7 +82,8 @@ if denoise:
     source = autoencoder.predict(source)
     target = autoencoder.predict(target)
 
-# rescale the data to have zero mean and unit variance
+# rescale source to have zero mean and unit variance
+# apply same transformation to the target
 preprocessor = prep.StandardScaler().fit(source)
 source = preprocessor.transform(source)  
 target = preprocessor.transform(target)    
@@ -94,17 +96,17 @@ target = preprocessor.transform(target)
 calibInput_ns = Input(shape=(inputDim,))
 block1_bn1_ns = BatchNormalization()(calibInput_ns)
 block1_a1_ns = Activation('relu')(block1_bn1_ns)
-block1_w1_ns = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a1_ns) 
+block1_w1_ns = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block1_a1_ns) 
 block1_bn2_ns = BatchNormalization()(block1_w1_ns)
 block1_a2_ns = Activation('relu')(block1_bn2_ns)
-block1_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a2_ns) 
+block1_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block1_a2_ns) 
 #block1_output = merge([block1_w2, calibInput], mode = 'sum')
 block2_bn1_ns = BatchNormalization()(block1_w2_ns)
 block2_a1_ns = Activation('relu')(block2_bn1_ns)
-block2_w1_ns = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a1_ns) 
+block2_w1_ns = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block2_a1_ns) 
 block2_bn2_ns = BatchNormalization()(block2_w1_ns)
 block2_a2_ns = Activation('relu')(block2_bn2_ns)
-block2_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a2_ns) 
+block2_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block2_a2_ns) 
 #block2_output_ns = merge([block2_w2_ns, block1_output_ns], mode = 'sum')
 
 calibMMDNet_noSkip = Model(input=calibInput_ns, output=block2_w2_ns)
@@ -257,13 +259,14 @@ norm after calibration:  1.86466540344
 norm after calibration (no skip connections):  3.5786634537
 
 MMD before calibration: 0.730235
-MMD after calibration: 0.169829
-MMD after calibration (no skip connections): 0.20533
+MMD after calibration: 0.195829
+MMD after calibration (no skip connections): 0.17233
 
-MMD(target,target):  [ 0.04476946  0.04335737  0.04246632  0.02311678]
-MMD(before calibration, target):  [ 0.05697803  0.07650173  0.33698736  0.46725364]
-MMD(after calibration, target):  [ 0.05704714  0.05923133  0.04814528  0.02842479]
-MMD(after calibration (no skip connections), target):  [ 0.0570376   0.06644011  0.06665733  0.04438627]
+MMD(target,target):                                    [ 0.04511923  0.0449985   0.03910307  0.02206893]
+MMD(before calibration, target):                       [ 0.05663344  0.06927705  0.32667064  0.46893554]
+MMD(after calibration, target):                        [ 0.05740524  0.06063142  0.06593374  0.03292708]
+MMD(after calibration (no skip connections), target):  [ 0.05715451  0.0619564   0.05277508  0.04033254]
+
 '''
 
 ################### compare validation losses with and without skip connections ###################
