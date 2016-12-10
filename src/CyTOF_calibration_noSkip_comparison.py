@@ -255,18 +255,18 @@ print('MMD(after calibration (no skip connections), target): ', OT_a_noSkip)
 
 '''
  this script gave: 
-norm before calibration:  3.56451251247
-norm after calibration:  
+norm before calibration:                       3.19909245864
+norm after calibration:                        1.45680005805 
+norm after calibration (no skip connections):  2.29659227473
 
-MMD before calibration: 0.730235
-MMD after calibration: 0.175829
-MMD after calibration (no skip connections): 0.17233
+MMD before calibration: 0.756756
+MMD after calibration:  0.189666
+MMD after calibration (no skip connections): 0.171696
 
-MMD(target,target):                                    [ 0.04511923  0.0449985   0.03910307  0.02206893]
-MMD(before calibration, target):                       [ 0.05663344  0.06927705  0.32667064  0.46893554]
-MMD(after calibration, target):                        
-MMD(after calibration (no skip connections), target):  [ 0.05715451  0.0619564   0.05277508  0.04033254]
-
+MMD(target,target):                                    [ 0.04500784  0.04569531  0.04027065  0.01983629]
+MMD(before calibration, target):                       [ 0.05675488  0.06760406  0.32243539  0.45344398]
+MMD(after calibration, target):                        [ 0.05660406  0.06103335  0.06739668  0.03540214]
+MMD(after calibration (no skip connections), target):  [ 0.05697683  0.06160334  0.06223213  0.04051251]
 '''
 
 ################### compare validation losses with and without skip connections ###################
