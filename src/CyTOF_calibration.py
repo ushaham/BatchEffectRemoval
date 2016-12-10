@@ -225,10 +225,9 @@ print('MMD(after calibration, target): ', OT_a)
 norm before calibration:  2.4694394241
 norm after calibration:  1.12858948082
 
-MMD before calibration: 0.67535
-MMD after calibration: 0.183587
+MMD before calibration: 0.767845
+MMD after calibration: 0.172223
 
-MMD(target,target):               [ 0.04464158  0.04378966  0.04404854  0.02261524]
-MMD(before calibration, target):  [ 0.05667464  0.0678119   0.28171016  0.39261962]
-MMD(after calibration, target):   [ 0.05703616  0.06028724  0.0701801   0.02693119]
-'''
+MMD(target,target):              [ 0.04475028  0.04461679  0.04497248  0.01972421]
+MMD(before calibration, target): [ 0.05654431  0.06772142  0.29965105  0.43339514]
+MMD(after calibration, target):  [ 0.05700915  0.05850884  0.05324285  0.02856449]'''
