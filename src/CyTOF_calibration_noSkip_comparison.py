@@ -156,6 +156,7 @@ calibMMDNet = Model(input=calibInput, output=block2_output)
 
 
 #train MMD net
+lrate = LearningRateScheduler(step_decay)
 optimizer = keras.optimizers.rmsprop(lr=0.0)
 
 calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
@@ -255,16 +256,15 @@ print('MMD(after calibration (no skip connections), target): ', OT_a_noSkip)
 '''
  this script gave: 
 norm before calibration:  3.56451251247
-norm after calibration:  1.86466540344
-norm after calibration (no skip connections):  3.5786634537
+norm after calibration:  
 
 MMD before calibration: 0.730235
-MMD after calibration: 0.195829
+MMD after calibration: 0.175829
 MMD after calibration (no skip connections): 0.17233
 
 MMD(target,target):                                    [ 0.04511923  0.0449985   0.03910307  0.02206893]
 MMD(before calibration, target):                       [ 0.05663344  0.06927705  0.32667064  0.46893554]
-MMD(after calibration, target):                        [ 0.05740524  0.06063142  0.06593374  0.03292708]
+MMD(after calibration, target):                        
 MMD(after calibration (no skip connections), target):  [ 0.05715451  0.0619564   0.05277508  0.04033254]
 
 '''
