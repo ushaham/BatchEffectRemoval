@@ -99,12 +99,14 @@ if denoise:
     source2 = autoencoder.predict(source2)
     target2 = autoencoder.predict(target2)
 
-# rescale the data to have zero mean and unit variance
+# rescale source1 to have zero mean and unit variance,
+# apply same transformation to target1
 preprocessor = prep.StandardScaler().fit(source1)
 source1 = preprocessor.transform(source1)  
 target1 = preprocessor.transform(target1)    
 
-# rescale the data to have zero mean and unit variance
+# rescale source2 to have zero mean and unit variance,
+# apply same transformation to target2
 preprocessor = prep.StandardScaler().fit(source2)
 source2 = preprocessor.transform(source2)  
 target2 = preprocessor.transform(target2)    
@@ -228,16 +230,19 @@ plt.draw()
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
 sourceInds = np.random.randint(low=0, high = source1.shape[0], size = 1000)
-targetInds = np.random.randint(low=0, high = target1.shape[0], size = 1000)
+maxTargetInd = np.min([len(target1), len(target2)])
+targetInds = np.random.randint(low=0, high = maxTargetInd, size = 1000)
 
 
-mmd_before = K.eval(cf.MMD(source1,target1).cost(K.variable(value=source1[sourceInds]), K.variable(value=target1[targetInds])))
+mmd_before1 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=source1[sourceInds]), K.variable(value=target1[targetInds])))
+mmd_before2 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=source1[sourceInds]), K.variable(value=target2[targetInds])))
 mmd_after_a1 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_11[sourceInds]), K.variable(value=target1[targetInds])))
 mmd_after_b1 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_21[sourceInds]), K.variable(value=target1[targetInds])))
 mmd_after_b12 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_21[sourceInds]), K.variable(value=target2[targetInds])))
 
 
-print('patient 1: MMD to target1 before calibration: ' + str(mmd_before))
+print('patient 1: MMD to target1 before calibration: ' + str(mmd_before1))
+print('patient 1: MMD to target2 before calibration: ' + str(mmd_before2))
 print('patient 1: MMD to target1 after calibration (net a): ' + str(mmd_after_a1))
 print('patient 1: MMD to target1 after calibration (net b): ' + str(mmd_after_b1))
 print('patient 1: MMD to target2 after calibration (net b): ' + str(mmd_after_b12))
@@ -246,13 +251,15 @@ sourceInds = np.random.randint(low=0, high = source2.shape[0], size = 1000)
 targetInds = np.random.randint(low=0, high = target1.shape[0], size = 1000)
 
 
-mmd_before = K.eval(cf.MMD(source2,target2).cost(K.variable(value=source2[sourceInds]), K.variable(value=target2[targetInds])))
+mmd_before2 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=source2[sourceInds]), K.variable(value=target2[targetInds])))
+mmd_before1 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=source2[sourceInds]), K.variable(value=target1[targetInds])))
 mmd_after_a2 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=calibration_12[sourceInds]), K.variable(value=target2[targetInds])))
 mmd_after_b2 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=calibration_22[sourceInds]), K.variable(value=target2[targetInds])))
 mmd_after_a21 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=calibration_12[sourceInds]), K.variable(value=target1[targetInds])))
 
 
-print('patient 2: MMD to target2 before calibration: ' + str(mmd_before))
+print('patient 2: MMD to target2 before calibration: ' + str(mmd_before2))
+print('patient 2: MMD to target1 before calibration: ' + str(mmd_before1))
 print('patient 2: MMD to target2 after calibration (net b): ' + str(mmd_after_b2))
 print('patient 2: MMD to target2 after calibration (net a): ' + str(mmd_after_a2))
 print('patient 2: MMD to target1 after calibration (net a): ' + str(mmd_after_a21))
