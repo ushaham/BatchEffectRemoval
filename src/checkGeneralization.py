@@ -144,7 +144,7 @@ calibMMDNet_1.compile(optimizer='rmsprop', loss=lambda y_true,y_pred:
                cf.MMD(block2_output_1,target1,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source1.shape[0])
 calibMMDNet_1.fit(source1, sourceLabels[:source1.shape[0]],nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
-           callbacks=[lrate,mn.monitorMMD(source1, target1, calibMMDNet_1.predict),
+           callbacks=[mn.monitorMMD(source1, target1, calibMMDNet_1.predict),
                       cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
 
 
@@ -173,7 +173,7 @@ calibMMDNet_2.compile(optimizer='rmsprop', loss=lambda y_true,y_pred:
                cf.MMD(block2_output_2,target2,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source2.shape[0])
 calibMMDNet_2.fit(source2, sourceLabels[:source2.shape[0]],nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
-           callbacks=[lrate,mn.monitorMMD(source2, target2, calibMMDNet_2.predict),
+           callbacks=[mn.monitorMMD(source2, target2, calibMMDNet_2.predict),
                       cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
 
 
