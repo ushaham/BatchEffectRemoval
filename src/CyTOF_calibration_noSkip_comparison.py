@@ -160,7 +160,7 @@ calibMMDNet_noSkip.compile(optimizer='rmsprop', loss=lambda y_true,y_pred:
 sourceLabels = np.zeros(source.shape[0])
 history_noSkip = History()
 calibMMDNet_noSkip.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
-           callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet_noSkip.predict),
+           callbacks=[mn.monitorMMD(source, target, calibMMDNet_noSkip.predict),
                       cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto'), history_noSkip])
 
 
