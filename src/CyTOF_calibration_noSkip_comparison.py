@@ -21,7 +21,7 @@ import CostFunctions as cf
 import Monitoring as mn
 from keras.regularizers import l2
 from sklearn import decomposition
-from keras.callbacks import LearningRateScheduler
+from keras.callbacks import LearningRateScheduler, History
 import math
 from keras import backend as K
 import ScatterHist as sh
@@ -120,13 +120,13 @@ lrate = LearningRateScheduler(step_decay)
 
 #train MMD net
 optimizer = keras.optimizers.rmsprop(lr=0.0)
-
+history = History()
 calibMMDNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
                cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source.shape[0])
 calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[mn.monitorMMD(source, target, calibMMDNet.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
+                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto'), history])
 
 ####################################
 ######## train MMD net noSkip ######
