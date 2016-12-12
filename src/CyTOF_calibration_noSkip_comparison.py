@@ -45,6 +45,14 @@ l2_penalty = 1e-2
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
 init_ns = 'glorot_normal'
 
+# learning rate schedule
+def step_decay(epoch):
+    initial_lrate = 0.01
+    drop = 0.5
+    epochs_drop = 25.0
+    lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
+    return lrate
+lrate = LearningRateScheduler(step_decay)
 
 ######################
 ###### get data ######
@@ -88,49 +96,6 @@ preprocessor = prep.StandardScaler().fit(source)
 source = preprocessor.transform(source)  
 target = preprocessor.transform(target)    
 
-####################################
-######## train MMD net noSkip ######
-####################################
-
-
-calibInput_ns = Input(shape=(inputDim,))
-block1_bn1_ns = BatchNormalization()(calibInput_ns)
-block1_a1_ns = Activation('relu')(block1_bn1_ns)
-block1_w1_ns = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block1_a1_ns) 
-block1_bn2_ns = BatchNormalization()(block1_w1_ns)
-block1_a2_ns = Activation('relu')(block1_bn2_ns)
-block1_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block1_a2_ns) 
-#block1_output = merge([block1_w2, calibInput], mode = 'sum')
-block2_bn1_ns = BatchNormalization()(block1_w2_ns)
-block2_a1_ns = Activation('relu')(block2_bn1_ns)
-block2_w1_ns = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block2_a1_ns) 
-block2_bn2_ns = BatchNormalization()(block2_w1_ns)
-block2_a2_ns = Activation('relu')(block2_bn2_ns)
-block2_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block2_a2_ns) 
-#block2_output_ns = merge([block2_w2_ns, block1_output_ns], mode = 'sum')
-
-calibMMDNet_noSkip = Model(input=calibInput_ns, output=block2_w2_ns)
-
-# learning rate schedule
-def step_decay(epoch):
-    initial_lrate = 0.01
-    drop = 0.5
-    epochs_drop = 25.0
-    lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
-    return lrate
-lrate = LearningRateScheduler(step_decay)
-
-#train MMD net
-optimizer = keras.optimizers.rmsprop(lr=0.0)
-
-calibMMDNet_noSkip.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
-               cf.MMD(block2_w2_ns,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
-sourceLabels = np.zeros(source.shape[0])
-history_noSkip = History()
-calibMMDNet_noSkip.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
-           callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet_noSkip.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto'), history_noSkip])
-
 ###################################
 ######## train MMD net       ######
 ###################################
@@ -167,6 +132,41 @@ calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_spli
            callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet.predict),
                       cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto'), history])
 
+
+####################################
+######## train MMD net noSkip ######
+####################################
+
+
+calibInput_ns = Input(shape=(inputDim,))
+block1_bn1_ns = BatchNormalization()(calibInput_ns)
+block1_a1_ns = Activation('relu')(block1_bn1_ns)
+block1_w1_ns = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block1_a1_ns) 
+block1_bn2_ns = BatchNormalization()(block1_w1_ns)
+block1_a2_ns = Activation('relu')(block1_bn2_ns)
+block1_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block1_a2_ns) 
+#block1_output = merge([block1_w2, calibInput], mode = 'sum')
+block2_bn1_ns = BatchNormalization()(block1_w2_ns)
+block2_a1_ns = Activation('relu')(block2_bn1_ns)
+block2_w1_ns = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block2_a1_ns) 
+block2_bn2_ns = BatchNormalization()(block2_w1_ns)
+block2_a2_ns = Activation('relu')(block2_bn2_ns)
+block2_w2_ns = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init_ns)(block2_a2_ns) 
+#block2_output_ns = merge([block2_w2_ns, block1_output_ns], mode = 'sum')
+
+calibMMDNet_noSkip = Model(input=calibInput_ns, output=block2_w2_ns)
+
+
+#train MMD net
+optimizer = keras.optimizers.rmsprop(lr=0.0)
+
+calibMMDNet_noSkip.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
+               cf.MMD(block2_w2_ns,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+sourceLabels = np.zeros(source.shape[0])
+history_noSkip = History()
+calibMMDNet_noSkip.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
+           callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet_noSkip.predict),
+                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto'), history_noSkip])
 
 
 
