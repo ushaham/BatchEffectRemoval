@@ -65,7 +65,7 @@ print(np.sum(toKeepS))
 toKeepT = np.sum((target==0), axis = 1) <=numZerosOK
 print(np.sum(toKeepT))
 
-inputDim = target.shape[1]
+inputDim = target.shape[1] 
 
 if denoise:
     trainTarget_ae = np.concatenate([source[toKeepS], target[toKeepT]], axis=0)
