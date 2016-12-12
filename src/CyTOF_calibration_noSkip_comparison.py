@@ -42,7 +42,7 @@ l2_penalty_ae = 1e-2
 mmdNetLayerSizes = [25, 25]
 l2_penalty = 1e-2
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
-
+init_ns = 'glorot_normal'
 
 ######################
 ###### get data ######
