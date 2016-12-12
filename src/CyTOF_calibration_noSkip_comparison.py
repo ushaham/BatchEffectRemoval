@@ -31,7 +31,7 @@ from numpy import genfromtxt
 import sklearn.preprocessing as prep
 
 # configuration hyper parameters
-denoise = True # wether or not to train a denoising autoencoder to remover the zeros
+denoise = True # whether or not to train a denoising autoencoder to remover the zeros
 keepProb=.8
 
 # AE confiduration
