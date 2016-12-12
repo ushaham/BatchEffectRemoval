@@ -37,11 +37,11 @@ keepProb=.8
 
 # AE confiduration
 ae_encodingDim = 25
-l2_penalty_ae = 1e-3 
+l2_penalty_ae = 1e-2 
 
 #MMD net configuration
 mmdNetLayerSizes = [25, 25]
-l2_penalty = 5e-3
+l2_penalty = 1e-2
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
 init_ns = 'glorot_normal'
 
@@ -123,7 +123,7 @@ lrate = LearningRateScheduler(step_decay)
 #train MMD net
 optimizer = keras.optimizers.rmsprop(lr=0.0)
 
-calibMMDNet_noSkip.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
+calibMMDNet_noSkip.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
                cf.MMD(block2_w2_ns,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source.shape[0])
 history_noSkip = History()
@@ -159,7 +159,7 @@ calibMMDNet = Model(input=calibInput, output=block2_output)
 lrate = LearningRateScheduler(step_decay)
 optimizer = keras.optimizers.rmsprop(lr=0.0)
 
-calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
+calibMMDNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
                cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source.shape[0])
 history = History()
