@@ -262,7 +262,7 @@ MMD(before calibration, target):                       [ 0.0571688   0.08270616 
 MMD(after calibration, target):                        [ 0.0566791   0.06435779  0.08406941  0.0723008 ]
 MMD(after calibration (no skip connections), target):  [ 0.06034936  0.07742755  0.10427251  0.06420016]
 '''
-
+ 
 ################### compare validation losses with and without skip connections ###################
 resNet_valLoss = np.asarray(history.history['val_loss'])
 noSkip_valLoss = np.asarray(history_noSkip.history['val_loss'])
