@@ -26,17 +26,18 @@ import sklearn.preprocessing as prep
 from keras import initializations
 from keras.layers import Input, Dense, merge, Activation
 from keras.layers.normalization import BatchNormalization
+import ScatterHist as sh
 
 denoise = True # wether or not to train a denoising autoencoder to remover the zeros
 keepProb=.8
 
 # AE confiduration
 ae_encodingDim = 25
-l2_penalty_ae = 1e-3 
+l2_penalty_ae = 1e-2
 
 #MMD net configuration
 mmdNetLayerSizes = [25, 25]
-l2_penalty = 5e-3
+l2_penalty = 1e-2
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
 
 def step_decay(epoch):
@@ -45,7 +46,6 @@ def step_decay(epoch):
     epochs_drop = 25.0
     lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
     return lrate
-lrate = LearningRateScheduler(step_decay)
 
 
 
@@ -87,17 +87,18 @@ inputDim = target1.shape[1]
 if denoise:
     trainTarget_ae = np.concatenate([source1[toKeepS1], target1[toKeepT1], source2[toKeepS2], target2[toKeepT2]], axis=0)
     trainData_ae = trainTarget_ae * np.random.binomial(n=1, p=keepProb, size = trainTarget_ae.shape)
+    #trainTarget_ae = np.concatenate([source1[toKeepS1], target1[toKeepT1]], axis=0)
+    #trainData_ae = trainTarget_ae * np.random.binomial(n=1, p=keepProb, size = trainTarget_ae.shape)
     input_cell = Input(shape=(inputDim,))
     encoded = Dense(ae_encodingDim, activation='relu',W_regularizer=l2(l2_penalty_ae))(input_cell)
     decoded = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty_ae))(encoded)
     autoencoder = Model(input=input_cell, output=decoded)
-    autoencoder.compile(optimizer='adam', loss='mse')
+    autoencoder.compile(optimizer='rmsprop', loss='mse')
     autoencoder.fit(trainData_ae, trainTarget_ae, nb_epoch=500, batch_size=128, shuffle=True,  validation_split=0.1,
-                    callbacks=[mn.monitor(), cb.EarlyStopping(monitor='val_loss', patience=10,  mode='auto')])    
+                    callbacks=[mn.monitor(), cb.EarlyStopping(monitor='val_loss', patience=25,  mode='auto')])    
     source1 = autoencoder.predict(source1)
     target1 = autoencoder.predict(target1)
-    source2 = autoencoder.predict(source2)
-    target2 = autoencoder.predict(target2)
+    
 
 # rescale source1 to have zero mean and unit variance,
 # apply same transformation to target1
@@ -135,13 +136,16 @@ block2_w2_1 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), 
 block2_output_1 = merge([block2_w2_1, block1_output_1], mode = 'sum')
 
 calibMMDNet_1 = Model(input=calibInput_1, output=block2_output_1)
+
+lrate = LearningRateScheduler(step_decay)
 optimizer = keras.optimizers.rmsprop(lr=0.0)
-calibMMDNet_1.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
+
+calibMMDNet_1.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
                cf.MMD(block2_output_1,target1,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source1.shape[0])
 calibMMDNet_1.fit(source1, sourceLabels[:source1.shape[0]],nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(source1, target1, calibMMDNet_1.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=25,mode='auto')])
+                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
 
 
 # second net
@@ -162,13 +166,15 @@ block2_w2_2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), 
 block2_output_2 = merge([block2_w2_2, block1_output_2], mode = 'sum')
 
 calibMMDNet_2 = Model(input=calibInput_2, output=block2_output_2)
+
+lrate = LearningRateScheduler(step_decay)
 optimizer = keras.optimizers.rmsprop(lr=0.0)
-calibMMDNet_2.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
+calibMMDNet_2.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
                cf.MMD(block2_output_2,target2,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source2.shape[0])
 calibMMDNet_2.fit(source2, sourceLabels[:source2.shape[0]],nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(source2, target2, calibMMDNet_2.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=25,mode='auto')])
+                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
 
 
 
@@ -189,9 +195,19 @@ calibration_21 =  calibMMDNet_2.predict(source1)
 pca = decomposition.PCA(n_components=2)
 pca.fit(target1)
 target_sample_pca = np.dot(target1, pca.components_[[0,1]].transpose())
+projection_before = np.dot(source1, pca.components_[[0,1]].transpose())
 projection_org = np.dot(calibration_11, pca.components_[[0,1]].transpose())
 projection_cross = np.dot(calibration_21, pca.components_[[0,1]].transpose())
 
+pc1 = 0
+pc2 = 1
+axis1 = 'PC'+str(pc1)
+axis2 = 'PC'+str(pc2)
+sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2], axis1, axis2)
+sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_org[:,pc1], projection_org[:,pc2], axis1, axis2)
+sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_cross[:,pc1], projection_cross[:,pc2], axis1, axis2)
+
+'''
 # plot of 
 fig = plt.figure()
 a1 = fig.add_subplot(211)
@@ -225,7 +241,7 @@ a2.scatter(projection_cross[:,0], projection_cross[:,1], color='green', s=1)
 a2.set_title("patient 2,  target (blue), net 1 calib (green) ")
 
 plt.draw()
-
+'''
 
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
@@ -265,15 +281,15 @@ print('patient 2: MMD to target2 after calibration (net a): ' + str(mmd_after_a2
 print('patient 2: MMD to target1 after calibration (net a): ' + str(mmd_after_a21))
 
 '''
-patient 1: MMD to target1 before calibration: 0.694902
-patient 1: MMD to target1 after calibration (net a): 0.405069
-patient 1: MMD to target1 after calibration (net b): 0.397308
-patient 1: MMD to target2 after calibration (net b): 0.553272
+patient 1: MMD to target1 before calibration:        0.690828
+patient 1: MMD to target1 after calibration (net a): 0.408039
+patient 1: MMD to target1 after calibration (net b): 0.363497
+patient 1: MMD to target2 after calibration (net b): 0.629654
 
-patient 2: MMD to target2 before calibration: 0.767896
-patient 2: MMD to target2 after calibration (net b): 0.332747
-patient 2: MMD to target2 after calibration (net a): 0.551316
-patient 2: MMD to target1 after calibration (net a): 0.521795
+patient 2: MMD to target2 before calibration:        0.714328
+patient 2: MMD to target2 after calibration (net b): 0.366901
+patient 2: MMD to target2 after calibration (net a): 0.496779
+patient 2: MMD to target1 after calibration (net a): 0.529783
 
 
 '''
