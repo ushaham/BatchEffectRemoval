@@ -5,78 +5,78 @@ Created on Dec 5, 2016
 '''
 
 import os.path
-import keras.optimizers
 from Calibration_Util import DataHandler as dh 
 from Calibration_Util import FileIO as io
-from Calibration_Util import Misc
-from keras.layers import Input, Dense, merge, Activation
-from keras.models import Model
-from keras import callbacks as cb
 import numpy as np
 import matplotlib
-from keras.layers.normalization import BatchNormalization
 matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 import CostFunctions as cf
-import Monitoring as mn
-from keras.regularizers import l2
 from sklearn import decomposition
-from keras.callbacks import LearningRateScheduler
-import math
 from keras import backend as K
 import ScatterHist as sh
 from statsmodels.distributions.empirical_distribution import ECDF
-from keras import initializations
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
+from keras.models import load_model
+from keras import initializations
 
 # configuration hyper parameters
 denoise = True # whether or not to train a denoising autoencoder to remover the zeros
-keepProb=.8
 
-# AE confiduration
-ae_encodingDim = 25
-l2_penalty_ae = 1e-2 
-
-#MMD net configuration
-mmdNetLayerSizes = [25, 25]
-l2_penalty = 1e-2
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
-
+def init (shape, name = None):
+    return initializations.normal(shape, scale=.1e-4, name=name)
+setattr(initializations, 'init', init)
 
 ######################
 ###### get data ######
 ######################
 # we load two CyTOF samples 
 
-sampleAPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1.csv')
-sampleBPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2.csv')
+data = 'person1_baseline'
 
-source = genfromtxt(sampleAPath, delimiter=',', skip_header=0)
-target = genfromtxt(sampleBPath, delimiter=',', skip_header=0)
+if data =='person1_baseline':
+    sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline_label.csv')
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet.h5'), custom_objects={'init':init})  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP.h5'), custom_objects={'init':init})  
+if data =='person2_baseline':
+    sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline_label.csv')
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_ResNet.h5'))  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_MLP.h5'))  
+if data =='person1_3month':
+    sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month_label.csv')
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_DAE.h5'))  
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet.h5'))  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_MLP.h5'))  
+if data =='person2_3month':
+    sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month_label.csv')
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_DAE.h5'))  
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet.h5'))  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP.h5'))  
+   
+source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
+target = genfromtxt(targetPath, delimiter=',', skip_header=0)
 
 # pre-process data: log transformation, a standard practice with CyTOF data
 target = dh.preProcessCytofData(target)
 source = dh.preProcessCytofData(source) 
 
-numZerosOK=1
-toKeepS = np.sum((source==0), axis = 1) <=numZerosOK
-print(np.sum(toKeepS))
-toKeepT = np.sum((target==0), axis = 1) <=numZerosOK
-print(np.sum(toKeepT))
-
-inputDim = target.shape[1]
-
 if denoise:
-    trainTarget_ae = np.concatenate([source[toKeepS], target[toKeepT]], axis=0)
-    trainData_ae = trainTarget_ae * np.random.binomial(n=1, p=keepProb, size = trainTarget_ae.shape)
-    input_cell = Input(shape=(inputDim,))
-    encoded = Dense(ae_encodingDim, activation='relu',W_regularizer=l2(l2_penalty_ae))(input_cell)
-    decoded = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty_ae))(encoded)
-    autoencoder = Model(input=input_cell, output=decoded)
-    autoencoder.compile(optimizer='rmsprop', loss='mse')
-    autoencoder.fit(trainData_ae, trainTarget_ae, nb_epoch=500, batch_size=128, shuffle=True,  validation_split=0.1,
-                    callbacks=[mn.monitor(), cb.EarlyStopping(monitor='val_loss', patience=25,  mode='auto')])    
     source = autoencoder.predict(source)
     target = autoencoder.predict(target)
 
@@ -87,6 +87,7 @@ source = preprocessor.transform(source)
 target = preprocessor.transform(target)    
  
 
+calibratedSource_resNet = ResNet.predict(source)
 
 ###############################################################
 ###### calibration by shifting and rescaling each marker ######
@@ -98,10 +99,10 @@ vt = np.var(target, axis = 0)
 ms = np.mean(source, axis = 0)
 vs = np.var(source, axis = 0)
 
-source_train_Z = np.zeros(source.shape)
+calibratedSource_Z = np.zeros(source.shape)
 dim = target.shape[1]
 for i in range(dim):
-    source_train_Z[:,i] = (source[:,i] - ms[i]) / np.sqrt(vs[i]) * np.sqrt(vt[i]) + mt[i]
+    calibratedSource_Z[:,i] = (source[:,i] - ms[i]) / np.sqrt(vs[i]) * np.sqrt(vt[i]) + mt[i]
     
 
 ##########################################
@@ -127,71 +128,26 @@ toTake = np.argsort(np.abs(corrs))[range(dim-1)]
 
 combinedDataRecon = np.dot(combinedData_proj[:,toTake], pca.components_[[toTake]]) + np.mean(combinedData, axis=0)
 
-target_train_pca = combinedDataRecon[:n_target,]
-source_train_pca = combinedDataRecon[n_target:,]
+calibratedTarget_pca = combinedDataRecon[:n_target,]
+calibratedSource_pca = combinedDataRecon[n_target:,]
 # MMD with the a single scale at a time, for various scales
-
-
-####################
-###### ResNet ######
-####################
-calibInput = Input(shape=(inputDim,))
-block1_bn1 = BatchNormalization()(calibInput)
-block1_a1 = Activation('relu')(block1_bn1)
-block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a1) 
-block1_bn2 = BatchNormalization()(block1_w1)
-block1_a2 = Activation('relu')(block1_bn2)
-block1_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a2) 
-block1_output = merge([block1_w2, calibInput], mode = 'sum')
-block2_bn1 = BatchNormalization()(block1_output)
-block2_a1 = Activation('relu')(block2_bn1)
-block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a1) 
-block2_bn2 = BatchNormalization()(block2_w1)
-block2_a2 = Activation('relu')(block2_bn2)
-block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a2) 
-block2_output = merge([block2_w2, block1_output], mode = 'sum')
-
-calibMMDNet = Model(input=calibInput, output=block2_output)
-
-
-#train MMD net
-optimizer = keras.optimizers.rmsprop(lr=0.0)
-
-calibMMDNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
-               cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
-sourceLabels = np.zeros(source.shape[0])
-
-def step_decay(epoch):
-    initial_lrate = 0.01
-    drop = 0.5
-    epochs_drop = 50.0
-    lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
-    return lrate
-lrate = LearningRateScheduler(step_decay)
-
-
-calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
-           callbacks=[mn.monitorMMD(source, target, calibMMDNet.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
-
-resNetCalibratedSource = calibMMDNet.predict(source)
-
 
 ##############################################
 ############## Evaluation: MMD ###############
 ##############################################
-# MMD with the a single scale at a time, for various scales
-scales = [3e-1, 1e-0, 3e-0, 1e1]
-TT, OT_Z, ratios = Misc.checkScales(target, source_train_Z, scales, nIters = 5)
-TT, OT_pca, ratios = Misc.checkScales(target_train_pca, source_train_pca, scales, nIters = 5)
-TT, OT_ResNet, ratios = Misc.checkScales(target, resNetCalibratedSource, scales, nIters=5)
+# MMD with the scales used for training 
+sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
+targetInds = np.random.randint(low=0, high = target.shape[0], size = 1000)
 
+mmd_before = K.eval(cf.MMD(source,target).cost(K.variable(value=source[sourceInds]), K.variable(value=target[targetInds])))
+mmd_after_Z = K.eval(cf.MMD(calibratedSource_Z,target).cost(K.variable(value=calibratedSource_Z[sourceInds]), K.variable(value=target[targetInds])))
+mmd_after_pca = K.eval(cf.MMD(calibratedSource_pca,calibratedTarget_pca).cost(K.variable(value=calibratedSource_pca[sourceInds]), K.variable(value=calibratedTarget_pca[targetInds])))
+mmd_after_resNet = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
 
-print('scales: ', scales)
-print('MMD(target,target): ', TT)
-print('calibration using matching of means and variances: MMD(after calibration, target): ', OT_Z)
-print('calibration by removing PC most correlated with the batch: MMD(after calibration, target): ', OT_pca)
-print('MMD(after calibration, target): ', OT_ResNet)
+print('MMD before calibration: ' + str(mmd_before))
+print('MMD after calibration (Z): ' + str(mmd_after_Z))
+print('MMD after calibration (PCA): ' + str(mmd_after_pca))
+print('MMD after calibration (resNet): ' + str(mmd_after_resNet))
 
 
 # MMD(target,target):                                                                         [ 0.04440385  0.04514616  0.04236437  0.02476904]
@@ -215,10 +171,10 @@ projection_before = pca.transform(source)
 pc1 = 1
 pc2 = 2
 
-projection_after_z = pca.transform(source_train_Z)
-target_after_pca = pca.transform(target_train_pca)
-projection_after_pca = pca.transform(source_train_pca)
-projection_after_net = pca.transform(resNetCalibratedSource)
+projection_after_z = pca.transform(calibratedSource_Z)
+target_after_pca = pca.transform(calibratedTarget_pca)
+projection_after_pca = pca.transform(calibratedSource_pca)
+projection_after_net = pca.transform(calibratedSource_resNet)
 
 
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
