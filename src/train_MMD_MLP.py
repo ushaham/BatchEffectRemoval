@@ -146,5 +146,5 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
 
 '''
 # save model
-calibMMDNet.save(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP.h5'))  
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP.h5'))  
 '''
