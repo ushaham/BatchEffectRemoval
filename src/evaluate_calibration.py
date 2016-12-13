@@ -187,3 +187,5 @@ print('MMD after calibration (MLP): ' + str(mmd_after_MLP))
 sourceLabels = genfromtxt(sourceLabelPath, delimiter=',', skip_header=0)
 targetLabels = genfromtxt(targetLabelPath, delimiter=',', skip_header=0)
 
+source_subPop = source(sourceLabels==)
+
