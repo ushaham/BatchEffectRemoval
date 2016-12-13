@@ -188,10 +188,18 @@ print('MMD after calibration (MLP): ' + str(mmd_after_MLP))
 sourceLabels = genfromtxt(sourceLabelPath, delimiter=',', skip_header=0)
 targetLabels = genfromtxt(targetLabelPath, delimiter=',', skip_header=0)
 
-source_subPop = source(sourceLabels==1)
-target_subPop = source(targetLabels==1)
+source_subPop = source[sourceLabels==1]
+resNetCalibSubPop = calibratedSource_resNet[sourceLabels==1]
+mlpCalibSubPop = calibratedSource_MLP[sourceLabels==1]
+target_subPop = target[targetLabels==1]
 
-sh.scatterHist(target_sample_pca[target_subPop,pc1], target_sample_pca[target_subPop,pc2], projection_before[source_subPop,pc1], projection_before[source_subPop,pc2], axis1, axis2)
-sh.scatterHist(target_sample_pca[target_subPop,pc1], target_sample_pca[target_subPop,pc2], projection_after_ResNet[source_subPop,pc1], projection_after_ResNet[source_subPop,pc2], axis1, axis2)
-sh.scatterHist(target_sample_pca[target_subPop,pc1], target_sample_pca[target_subPop,pc2], projection_after_MLP[source_subPop,pc1], projection_after_MLP[source_subPop,pc2], axis1, axis2)
+marker1 = 13 #17 'IFNg'
+marker2 = 19
+
+axis1 = 'CD28'
+axis2 = 'GZB'
+
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], source_subPop[:,marker1], source_subPop[:,marker2], axis1, axis2)
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], resNetCalibSubPop[:,marker1], resNetCalibSubPop[:,marker2], axis1, axis2)
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], mlpCalibSubPop[:,marker1], mlpCalibSubPop[:,marker2], axis1, axis2)
 
