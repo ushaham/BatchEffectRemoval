@@ -8,24 +8,20 @@ import os.path
 import keras.optimizers
 from Calibration_Util import DataHandler as dh 
 from Calibration_Util import FileIO as io
-from Calibration_Util import Misc
-from keras.layers import Input, Dense, merge, Activation, Dropout
+from keras.layers import Input, Dense, merge, Activation
 from keras.models import Model
 from keras import callbacks as cb
 import numpy as np
 import matplotlib
 from keras.layers.normalization import BatchNormalization
 matplotlib.use('TkAgg')
-from matplotlib import pyplot as plt
 import CostFunctions as cf
 import Monitoring as mn
 from keras.regularizers import l2
 from sklearn import decomposition
 from keras.callbacks import LearningRateScheduler
 import math
-from keras import backend as K
 import ScatterHist as sh
-from statsmodels.distributions.empirical_distribution import ECDF
 from keras import initializations
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
@@ -49,7 +45,7 @@ init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
 #######################
 # we load two CyTOF samples 
 
-data = 'person2_3month'
+data = 'person1_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
