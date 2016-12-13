@@ -45,33 +45,27 @@ init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
 #######################
 # we load two CyTOF samples 
 
-data = 'person2_3month'
+data = 'person1_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
-    targetBPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
 if data =='person2_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
-    targetBPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
 if data =='person1_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month.csv')
-    targetBPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month.csv')
 if data =='person2_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month.csv')
-    targetBPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month.csv')
+    targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month.csv')
    
 source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
-target = genfromtxt(targetBPath, delimiter=',', skip_header=0)
+target = genfromtxt(targetPath, delimiter=',', skip_header=0)
 
 # pre-process data: log transformation, a standard practice with CyTOF data
 target = dh.preProcessCytofData(target)
 source = dh.preProcessCytofData(source) 
-
-numZerosOK=1
-toKeepS = np.sum((source==0), axis = 1) <=numZerosOK
-print(np.sum(toKeepS))
-toKeepT = np.sum((target==0), axis = 1) <=numZerosOK
-print(np.sum(toKeepT))
 
 inputDim = target.shape[1]
 
