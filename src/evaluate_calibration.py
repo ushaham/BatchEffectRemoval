@@ -188,5 +188,10 @@ print('MMD after calibration (MLP): ' + str(mmd_after_MLP))
 sourceLabels = genfromtxt(sourceLabelPath, delimiter=',', skip_header=0)
 targetLabels = genfromtxt(targetLabelPath, delimiter=',', skip_header=0)
 
-source_subPop = source(sourceLabels==)
+source_subPop = source(sourceLabels==1)
+target_subPop = source(targetLabels==1)
+
+sh.scatterHist(target_sample_pca[target_subPop,pc1], target_sample_pca[target_subPop,pc2], projection_before[source_subPop,pc1], projection_before[source_subPop,pc2], axis1, axis2)
+sh.scatterHist(target_sample_pca[target_subPop,pc1], target_sample_pca[target_subPop,pc2], projection_after_ResNet[source_subPop,pc1], projection_after_ResNet[source_subPop,pc2], axis1, axis2)
+sh.scatterHist(target_sample_pca[target_subPop,pc1], target_sample_pca[target_subPop,pc2], projection_after_MLP[source_subPop,pc1], projection_after_MLP[source_subPop,pc2], axis1, axis2)
 
