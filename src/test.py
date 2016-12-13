@@ -102,7 +102,8 @@ target = preprocessor.transform(target)
 
 
 calibInput = Input(shape=(inputDim,))
-block1_bn1 = BatchNormalization()(calibInput)
+block1_bn1 = Dense(inputDim, activation='relu',W_regularizer=l2(l2_penalty))(calibInput) 
+'''
 block1_a1 = Activation('relu')(block1_bn1)
 block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a1) 
 block1_bn2 = BatchNormalization()(block1_w1)
@@ -116,8 +117,22 @@ block2_bn2 = BatchNormalization()(block2_w1)
 block2_a2 = Activation('relu')(block2_bn2)
 block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2) 
 block2_output = merge([block2_w2, block1_output], mode = 'sum')
+'''
+calibMMDNet = Model(input=calibInput, output=block1_bn1)
+calibMMDNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
+               cf.MMD(block1_bn1,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/test.h5')) 
+calibMMDNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/test.h5'), by_name=True) 
 
-calibMMDNet = Model(input=calibInput, output=block2_output)
+calibMMDNet.save(os.path.join(io.DeepLearningRoot(),'savedModels/test.h5'))    
+from keras.models import load_model
+setattr(initializations, 'my_init', my_init)
+old_get = keras.initializations.get
+def patch_get(x):
+    return my_init if x == 'my_init' else old_get(x)
+@mock.patch('keras.initializations.get', patch_get)
+
+ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/test.h5'))               
 
 # learning rate schedule
 def step_decay(epoch):
@@ -164,6 +179,6 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
 '''
 # save models
 autoencoder.save(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))                 
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet.h5'))  
+calibMMDNet.save(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet.h5'))  
 '''
 calibMMDNet.save(os.path.join(io.DeepLearningRoot(),'savedModels/test.h5'))                 
