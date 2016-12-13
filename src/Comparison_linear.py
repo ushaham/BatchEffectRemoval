@@ -1,38 +1,37 @@
 '''
-Created on Sep 15, 2016
+Created on Dec 5, 2016
 
 @author: urishaham
 '''
 
-
 import os.path
 import keras.optimizers
+from Calibration_Util import DataHandler as dh 
 from Calibration_Util import FileIO as io
 from Calibration_Util import Misc
-from Calibration_Util import DataHandler as dh 
+from keras.layers import Input, Dense, merge, Activation
 from keras.models import Model
 from keras import callbacks as cb
 import numpy as np
 import matplotlib
+from keras.layers.normalization import BatchNormalization
 matplotlib.use('TkAgg')
+from matplotlib import pyplot as plt
 import CostFunctions as cf
 import Monitoring as mn
 from keras.regularizers import l2
 from sklearn import decomposition
 from keras.callbacks import LearningRateScheduler
 import math
+from keras import backend as K
 import ScatterHist as sh
+from statsmodels.distributions.empirical_distribution import ECDF
+from keras import initializations
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
-from keras import initializations
-from keras.layers import Input, Dense, merge, Activation
-from keras.layers.normalization import BatchNormalization
-from keras.callbacks import History 
-
-
 
 # configuration hyper parameters
-denoise = True # wether or not to train a denoising autoencoder to remover the zeros
+denoise = True # whether or not to train a denoising autoencoder to remover the zeros
 keepProb=.8
 
 # AE confiduration
@@ -45,12 +44,10 @@ l2_penalty = 1e-2
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
 
 
-
 ######################
 ###### get data ######
 ######################
 # we load two CyTOF samples 
-# Labels are cell types, they are not used in the calibration.
 
 sampleAPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1.csv')
 sampleBPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2.csv')
@@ -61,7 +58,6 @@ target = genfromtxt(sampleBPath, delimiter=',', skip_header=0)
 # pre-process data: log transformation, a standard practice with CyTOF data
 target = dh.preProcessCytofData(target)
 source = dh.preProcessCytofData(source) 
-
 
 numZerosOK=1
 toKeepS = np.sum((source==0), axis = 1) <=numZerosOK
@@ -84,11 +80,11 @@ if denoise:
     source = autoencoder.predict(source)
     target = autoencoder.predict(target)
 
-# rescale the data to have zero mean and unit variance
+# rescale source to have zero mean and unit variance
+# apply same transformation to the target
 preprocessor = prep.StandardScaler().fit(source)
-source = preprocessor.transform(source)  
-target = preprocessor.transform(target)   
-
+source = preprocessor.transform(source) 
+target = preprocessor.transform(target)    
  
 
 
@@ -168,16 +164,15 @@ sourceLabels = np.zeros(source.shape[0])
 def step_decay(epoch):
     initial_lrate = 0.01
     drop = 0.5
-    epochs_drop = 25.0
+    epochs_drop = 50.0
     lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
     return lrate
 lrate = LearningRateScheduler(step_decay)
 
 
-history = History()
 calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
-           callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet.predict),
-                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto'), history])
+           callbacks=[mn.monitorMMD(source, target, calibMMDNet.predict),
+                      cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
 
 resNetCalibratedSource = calibMMDNet.predict(source)
 
@@ -199,10 +194,10 @@ print('calibration by removing PC most correlated with the batch: MMD(after cali
 print('MMD(after calibration, target): ', OT_ResNet)
 
 
-# MMD(target,target):              [ 0.04481616  0.04474987  0.04029125  0.01990965]
-# MMD(after calibration, target):  [ 0.05656361  0.06639165  0.11051335  0.04295943]
-# MMD(after calibration,target):  [ 0.05652664  0.08449574  0.18398013  0.11810181]
-# MMD(after calibration,target):  [ 0.05652664  0.08449574  0.18398013  0.11810181]
+# MMD(target,target):                                                                         [ 0.04440385  0.04514616  0.04236437  0.02476904]
+# calibration using matching of means and variances: MMD(after calibration, target):          [ 0.05712092  0.0715281   0.10891724  0.03884947]
+# calibration by removing PC most correlated with the batch: MMD(after calibration, target):  [ 0.05697488  0.09389935  0.19798119  0.11305808]
+# MMD(after calibration, target):                                                             [ 0.05670956  0.06138352  0.05434766  0.02735295]
 
 
 
@@ -217,8 +212,8 @@ pca.fit(target)
 # project data onto PCs
 target_sample_pca = pca.transform(target)
 projection_before = pca.transform(source)
-pc1 = 0
-pc2 = 1
+pc1 = 1
+pc2 = 2
 
 projection_after_z = pca.transform(source_train_Z)
 target_after_pca = pca.transform(target_train_pca)
@@ -230,5 +225,3 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_be
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_z[:,pc1], projection_after_z[:,pc2])
 sh.scatterHist(target_after_pca[:,pc1], target_after_pca[:,pc2], projection_after_pca[:,pc1], projection_after_pca[:,pc2])
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_net[:,pc1], projection_after_net[:,pc2])
-
-
