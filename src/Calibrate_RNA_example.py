@@ -130,9 +130,9 @@ afterCalib = calibMMDNet.predict(source)
 ##################################### qualitative evaluation: PCA #####################################
 projection_before = pca.transform(source)
 projection_after = pca.transform(afterCalib)    
-# choose PCs to plot 0,10, 13, 14,15, 16,17, 19, 20,21
-pc1 = 0
-pc2 = 1
+# The PCs most correlated with the batch are 3 and 5
+pc1 = 3
+pc2 = 5
 if dataset =='PC':
     sh.scatterHist(target[:,pc1], target[:,pc2], source[:,pc1], source[:,pc2])
     sh.scatterHist(target[:,pc1], target[:,pc2], afterCalib[:,pc1], afterCalib[:,pc2])
@@ -140,28 +140,6 @@ if dataset =='raw':
     sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
     sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after[:,pc1], projection_after[:,pc2])
 
-if dataset =='PC':
-    for i in range(space_dim):
-        targetMarker = target[:,i]
-        beforeMarker = source[:,i]
-        afterMarker = afterCalib[:,i]
-        m = np.min([np.min(targetMarker), np.min(beforeMarker), np.min(afterMarker)])
-        M = np.max([np.max(targetMarker), np.max(beforeMarker), np.max(afterMarker)])
-        x = np.linspace(m, M, num=100)
-        target_ecdf = ECDF(targetMarker)
-        before_ecdf = ECDF(beforeMarker)
-        after_ecdf = ECDF(afterMarker)   
-        tgt_ecdf = target_ecdf(x)
-        bf_ecdf = before_ecdf(x)
-        af_ecdf = after_ecdf(x)    
-        fig = plt.figure()
-        a1 = fig.add_subplot(111)
-        a1.plot(tgt_ecdf, color = 'blue') 
-        a1.plot(bf_ecdf, color = 'red') 
-        a1.plot(af_ecdf, color = 'green') 
-        a1.set_xticklabels([])
-        plt.legend(['target', 'before calibration', 'after calibration'], loc=0)
-        plt.show()    
         
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
@@ -172,20 +150,21 @@ mmd_before = K.eval(cf.MMD(block2_output,target).cost(K.variable(value=source[so
 mmd_after = K.eval(cf.MMD(block2_output,target).cost(K.variable(value=afterCalib[sourceInds]), K.variable(value=target[targetInds])))
 print('MMD before calibration: ' + str(mmd_before))
 print('MMD after calibration: ' + str(mmd_after))
-     
-############################ save results ######################################## 
-calibratedSource =  calibMMDNet.predict(source)
-calibratedData = np.concatenate([calibratedData, calibratedSource], axis=0)
-cal_filename = '/raid3/RNA_second_calibratedData.csv'    
-savetxt(cal_filename, calibratedData, delimiter = ",")
 
 '''
 this script gives:
 MMD before calibration: 0.384037
 MMD after calibration: 0.142719
 '''
-
+     
+############################ save results ######################################## 
+calibratedSource =  calibMMDNet.predict(source)
+calibratedData = np.concatenate([calibratedData, calibratedSource], axis=0)
 '''
+# save calibrated data
+cal_filename = '/raid3/RNA_second_calibratedData.csv'    
+savetxt(cal_filename, calibratedData, delimiter = ",")
+
 # save model
 calibMMDNet.save(os.path.join(io.DeepLearningRoot(),'savedModels/RNA_ResNet.h5'))  
 '''
