@@ -72,6 +72,7 @@ if data =='person2_3month':
 source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
 target = genfromtxt(targetPath, delimiter=',', skip_header=0)
 
+
 # pre-process data: log transformation, a standard practice with CyTOF data
 target = dh.preProcessCytofData(target)
 source = dh.preProcessCytofData(source) 
@@ -152,9 +153,9 @@ NA_resNet = np.linalg.norm(FA_resNet, 'fro')
 NA_MLP = np.linalg.norm(FA_MLP, 'fro')
 
 
-print('norm before calibration: ', str(NB))
+print('norm before calibration:         ', str(NB))
 print('norm after calibration (resNet): ', str(NA_resNet)) 
-print('norm after calibration (MLP): ', str(NA_MLP)) 
+print('norm after calibration (MLP):    ', str(NA_MLP)) 
 
 fa_resNet = FA_resNet.flatten()
 fa_MLP = FA_MLP.flatten()
@@ -179,9 +180,9 @@ mmd_before = K.eval(cf.MMD(source,target).cost(K.variable(value=source[sourceInd
 mmd_after_resNet = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
 mmd_after_MLP = K.eval(cf.MMD(calibratedSource_MLP,target).cost(K.variable(value=calibratedSource_MLP[sourceInds]), K.variable(value=target[targetInds])))
 
-print('MMD before calibration: ' + str(mmd_before))
+print('MMD before calibration:         ' + str(mmd_before))
 print('MMD after calibration (resNet): ' + str(mmd_after_resNet))
-print('MMD after calibration (MLP): ' + str(mmd_after_MLP))
+print('MMD after calibration (MLP):    ' + str(mmd_after_MLP))
 
 
 ##################################### CD8 sub-population #####################################
