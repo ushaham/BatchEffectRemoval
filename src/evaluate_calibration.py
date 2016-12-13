@@ -25,9 +25,9 @@ from keras import initializations
 denoise = True # whether or not to train a denoising autoencoder to remover the zeros
 
 init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
-def init (shape, name = None):
+def my_init (shape, name = None):
     return initializations.normal(shape, scale=.1e-4, name=name)
-setattr(initializations, 'init', init)
+setattr(initializations, 'my_init', my_init)
 
 ######################
 ###### get data ######
