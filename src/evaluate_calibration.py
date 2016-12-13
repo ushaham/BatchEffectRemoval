@@ -24,9 +24,10 @@ from keras import initializations
 # configuration hyper parameters
 denoise = True # whether or not to train a denoising autoencoder to remover the zeros
 
-def my_init(shape, name=None):
-    return initializations.normal(shape, scale=1e-4, name=name)
-setattr(initializations, 'my_init', my_init)
+init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
+def init (shape, name = None):
+    return initializations.normal(shape, scale=.1e-4, name=name)
+setattr(initializations, 'init', init)
 
 ######################
 ###### get data ######
@@ -41,8 +42,8 @@ if data =='person1_baseline':
     sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline_label.csv')
     targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet.h5'), custom_objects={'my_init':my_init})  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP.h5'), custom_objects={'my_init':my_init})  
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet.h5'), custom_objects={'init':init})  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP.h5'), custom_objects={'init':init})  
 if data =='person2_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
