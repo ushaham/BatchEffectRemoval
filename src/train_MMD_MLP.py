@@ -8,7 +8,7 @@ import os.path
 import keras.optimizers
 from Calibration_Util import DataHandler as dh 
 from Calibration_Util import FileIO as io
-from keras.layers import Input, Dense, merge, Activation
+from keras.layers import Input, Dense, Activation
 from keras.models import Model
 from keras import callbacks as cb
 import numpy as np
@@ -27,7 +27,7 @@ from numpy import genfromtxt
 import sklearn.preprocessing as prep
 
 # configuration hyper parameters
-denoise = True # whether or not to train a denoising autoencoder to remover the zeros
+denoise = True # whether or not to train a denoising autoencoder to remove the zeros
 keepProb=.8
 
 # AE confiduration
@@ -37,7 +37,7 @@ l2_penalty_ae = 1e-2
 #MMD net configuration
 mmdNetLayerSizes = [25, 25]
 l2_penalty = 1e-2
-#init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
+
 def my_init (shape, name = None):
     return initializations.normal(shape, scale=.1e-4, name=name)
 
