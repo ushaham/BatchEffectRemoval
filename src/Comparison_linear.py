@@ -10,12 +10,10 @@ from Calibration_Util import FileIO as io
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib import pyplot as plt
 import CostFunctions as cf
 from sklearn import decomposition
 from keras import backend as K
 import ScatterHist as sh
-from statsmodels.distributions.empirical_distribution import ECDF
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
 from keras.models import load_model
@@ -35,31 +33,23 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
+data = 'person2_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
-    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline_label.csv')
-    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))   
 if data =='person2_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
-    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline_label.csv')
-    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
 if data =='person1_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month.csv')
-    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month_label.csv')
-    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_DAE.h5'))    
 if data =='person2_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month.csv')
-    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month_label.csv')
-    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_DAE.h5'))   
    
 source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
@@ -116,48 +106,23 @@ ResNet = Model(input=calibInput, output=block2_output)
 ResNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
                cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 
-# MLP
-calibInput_mlp = Input(shape=(inputDim,))
-block1_bn1_mlp = BatchNormalization()(calibInput_mlp)
-block1_a1_mlp = Activation('relu')(block1_bn1_mlp)
-block1_w1_mlp = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a1_mlp) 
-block1_bn2_mlp = BatchNormalization()(block1_w1_mlp)
-block1_a2_mlp = Activation('relu')(block1_bn2_mlp)
-block1_w2_mlp = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a2_mlp) 
-block2_bn1_mlp = BatchNormalization()(block1_w2_mlp)
-block2_a1_mlp = Activation('relu')(block2_bn1_mlp)
-block2_w1_mlp = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a1_mlp) 
-block2_bn2_mlp = BatchNormalization()(block2_w1_mlp)
-block2_a2_mlp = Activation('relu')(block2_bn2_mlp)
-block2_w2_mlp = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2_mlp) 
-MLP = Model(input=calibInput_mlp, output=block2_w2_mlp)
-MLP.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
-               cf.MMD(block2_w2_mlp,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
-
 ###########################
 ###### load MMD nets ######
 ###########################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
-
 if data =='person1_baseline': 
     ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet_weights.h5'))  
-    MLP.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP_weights.h5'))  
 if data =='person2_baseline': 
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_MLP.h5'))  
+    ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_ResNet_weights.h5'))  
 if data =='person1_3month': 
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_MLP.h5'))  
+    ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet_weights.h5'))  
 if data =='person2_3month':  
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP.h5'))  
+    ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet_weights.h5'))  
    
 
 
 calibratedSource_resNet = ResNet.predict(source)
-calibratedSource_MLP = MLP.predict(source)
 
 ###############################################################
 ###### calibration by shifting and rescaling each marker ######
@@ -214,17 +179,40 @@ mmd_after_Z = K.eval(cf.MMD(calibratedSource_Z,target).cost(K.variable(value=cal
 mmd_after_pca = K.eval(cf.MMD(calibratedSource_pca,calibratedTarget_pca).cost(K.variable(value=calibratedSource_pca[sourceInds]), K.variable(value=calibratedTarget_pca[targetInds])))
 mmd_after_resNet = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
 
-print('MMD before calibration: ' + str(mmd_before))
-print('MMD after calibration (Z): ' + str(mmd_after_Z))
-print('MMD after calibration (PCA): ' + str(mmd_after_pca))
+print('MMD before calibration:         ' + str(mmd_before))
+print('MMD after calibration (Z):      ' + str(mmd_after_Z))
+print('MMD after calibration (PCA):    ' + str(mmd_after_pca))
 print('MMD after calibration (resNet): ' + str(mmd_after_resNet))
 
 
-# MMD(target,target):                                                                         [ 0.04440385  0.04514616  0.04236437  0.02476904]
-# calibration using matching of means and variances: MMD(after calibration, target):          [ 0.05712092  0.0715281   0.10891724  0.03884947]
-# calibration by removing PC most correlated with the batch: MMD(after calibration, target):  [ 0.05697488  0.09389935  0.19798119  0.11305808]
-# MMD(after calibration, target):                                                             [ 0.05670956  0.06138352  0.05434766  0.02735295]
+'''
+patient 1_baseline:
+MMD before calibration:         0.653323
+MMD after calibration (Z):      0.27581
+MMD after calibration (PCA):    0.403644
+MMD after calibration (resNet): 0.287906
 
+patient 2_baseline:
+MMD before calibration:         0.572424
+MMD after calibration (Z):      0.239967
+MMD after calibration (PCA):    0.339116
+MMD after calibration (resNet): 0.272269
+
+patient 1_3month:
+MMD before calibration:         0.674912
+MMD after calibration (Z):      0.27605
+MMD after calibration (PCA):    0.338919
+MMD after calibration (resNet): 0.356362
+
+
+patient 2_3month:
+MMD before calibration:         0.667413
+MMD after calibration (Z):      0.325473
+MMD after calibration (PCA):    0.412792
+MMD after calibration (resNet): 0.304611
+
+
+'''
 
 
 
