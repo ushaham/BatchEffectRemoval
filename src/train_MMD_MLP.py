@@ -101,14 +101,20 @@ block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_p
 block2_bn2 = BatchNormalization()(block2_w1)
 block2_a2 = Activation('relu')(block2_bn2)
 block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2) 
+block3_bn1 = BatchNormalization()(block2_w2)
+block3_a1 = Activation('relu')(block3_bn1)
+block3_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a1) 
+block3_bn2 = BatchNormalization()(block3_w1)
+block3_a2 = Activation('relu')(block3_bn2)
+block3_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a2) 
 
 calibMMDNet = Model(input=calibInput, output=block2_w2)
 
 # learning rate schedule
 def step_decay(epoch):
-    initial_lrate = 0.01
-    drop = 0.5
-    epochs_drop = 25.0
+    initial_lrate = 0.001
+    drop = 0.1
+    epochs_drop = 150.0
     lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
     return lrate
 lrate = LearningRateScheduler(step_decay)
@@ -116,11 +122,11 @@ lrate = LearningRateScheduler(step_decay)
 #train MMD net
 optimizer = keras.optimizers.rmsprop(lr=0.0)
 
-calibMMDNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
-               cf.MMD(block2_w2,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
+               cf.MMD(block3_w2,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 sourceLabels = np.zeros(source.shape[0])
 calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
-           callbacks=[mn.monitorMMD(source, target, calibMMDNet.predict),
+           callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet.predict),
                       cb.EarlyStopping(monitor='val_loss',patience=50,mode='auto')])
 
 ##############################
