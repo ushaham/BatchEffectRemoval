@@ -38,8 +38,7 @@ l2_penalty_ae = 1e-2
 mmdNetLayerSizes = [25, 25]
 l2_penalty = 1e-2
 
-def my_init (shape, name = None):
-    return initializations.normal(shape, scale=.1e-4, name=name)
+my_init =  'glorot_normal'
 
 
 #######################
@@ -47,7 +46,7 @@ def my_init (shape, name = None):
 #######################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
+data = 'person2_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -73,7 +72,7 @@ inputDim = target.shape[1]
 
 if denoise:
     from keras.models import load_model
-    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_DAE.h5'))  
     source = autoencoder.predict(source)
     target = autoencoder.predict(target)
 
@@ -108,7 +107,7 @@ block3_bn2 = BatchNormalization()(block3_w1)
 block3_a2 = Activation('relu')(block3_bn2)
 block3_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a2) 
 
-calibMMDNet = Model(input=calibInput, output=block2_w2)
+calibMMDNet = Model(input=calibInput, output=block3_w2)
 
 # learning rate schedule
 def step_decay(epoch):
@@ -154,5 +153,5 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
 
 '''
 # save model
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP_weights.h5'))  
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP_weights.h5'))  
 '''
