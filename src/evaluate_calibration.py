@@ -139,20 +139,18 @@ MLP.compile(optimizer='rmsprop', loss=lambda y_true,y_pred:
 ###########################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
-
 if data =='person1_baseline': 
     ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet_weights.h5'))  
     MLP.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP_weights.h5'))  
 if data =='person2_baseline': 
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_MLP.h5'))  
+    ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_ResNet_weights.h5'))  
+    MLP.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_MLP_weights.h5'))  
 if data =='person1_3month': 
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_MLP.h5'))  
+    ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet_weights.h5'))  
+    MLP.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_MLP_weights.h5'))  
 if data =='person2_3month':  
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP.h5'))  
+    ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet_weights.h5'))  
+    MLP.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP_weights.h5'))  
    
 
 ##############################
