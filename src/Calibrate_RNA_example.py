@@ -57,7 +57,7 @@ def step_decay(epoch):
     lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
     return lrate
 lrate = LearningRateScheduler(step_decay)
-
+ 
 
 #dataPath = os.path.join(io.DeepLearningRoot(),'Data/RNA/second/new/data_2rep_std.csv')
 #dataPath = '/raid3/DropSeq/Retina/Second/data_2rep_std.csv'
