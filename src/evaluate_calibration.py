@@ -20,14 +20,15 @@ from numpy import genfromtxt
 import sklearn.preprocessing as prep
 from keras.models import load_model
 from keras import initializations
+from keras.layers.normalization import BatchNormalization
+from keras.layers import Input, Dense, merge, Activation
+from keras.regularizers import l2
+from keras.models import Model
+
+
 
 # configuration hyper parameters
-denoise = True # whether or not to train a denoising autoencoder to remover the zeros
-
-init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
-def my_init (shape, name = None):
-    return initializations.normal(shape, scale=.1e-4, name=name)
-setattr(initializations, 'my_init', my_init)
+denoise = True # whether or not to use a denoising autoencoder to remove the zeros
 
 ######################
 ###### get data ######
@@ -41,33 +42,25 @@ if data =='person1_baseline':
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
     sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline_label.csv')
     targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline_label.csv')
-    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet.h5'), custom_objects={'init':init})  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP.h5'), custom_objects={'init':init})  
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))   
 if data =='person2_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
     sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline_label.csv')
     targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_MLP.h5'))  
 if data =='person1_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month.csv')
     sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month_label.csv')
     targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month_label.csv')
-    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_DAE.h5'))  
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_MLP.h5'))  
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_DAE.h5'))    
 if data =='person2_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month.csv')
     sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month_label.csv')
     targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month_label.csv')
-    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_DAE.h5'))  
-    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet.h5'))  
-    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP.h5'))  
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_DAE.h5'))   
    
 source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
 target = genfromtxt(targetPath, delimiter=',', skip_header=0)
@@ -87,6 +80,80 @@ preprocessor = prep.StandardScaler().fit(source)
 source = preprocessor.transform(source) 
 target = preprocessor.transform(target)    
 
+
+
+
+###########################
+###### define models ######
+###########################
+# we load two CyTOF samples 
+mmdNetLayerSizes = [25, 25]
+inputDim = 25
+l2_penalty = 1e-2
+
+def my_init (shape, name = None):
+    return initializations.normal(shape, scale=.1e-4, name=name)
+setattr(initializations, 'my_init', my_init)
+
+
+# resNet
+calibInput = Input(shape=(inputDim,))
+block1_bn1 = BatchNormalization()(calibInput)
+block1_a1 = Activation('relu')(block1_bn1)
+block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a1) 
+block1_bn2 = BatchNormalization()(block1_w1)
+block1_a2 = Activation('relu')(block1_bn2)
+block1_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a2) 
+block1_output = merge([block1_w2, calibInput], mode = 'sum')
+block2_bn1 = BatchNormalization()(block1_output)
+block2_a1 = Activation('relu')(block2_bn1)
+block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a1) 
+block2_bn2 = BatchNormalization()(block2_w1)
+block2_a2 = Activation('relu')(block2_bn2)
+block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2) 
+block2_output = merge([block2_w2, block1_output], mode = 'sum')
+ResNet = Model(input=calibInput, output=block2_output)
+ResNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
+               cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+
+# MLP
+calibInput_mlp = Input(shape=(inputDim,))
+block1_bn1_mlp = BatchNormalization()(calibInput_mlp)
+block1_a1_mlp = Activation('relu')(block1_bn1_mlp)
+block1_w1_mlp = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a1_mlp) 
+block1_bn2_mlp = BatchNormalization()(block1_w1_mlp)
+block1_a2_mlp = Activation('relu')(block1_bn2_mlp)
+block1_w2_mlp = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a2_mlp) 
+block2_bn1_mlp = BatchNormalization()(block1_w2_mlp)
+block2_a1_mlp = Activation('relu')(block2_bn1_mlp)
+block2_w1_mlp = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a1_mlp) 
+block2_bn2_mlp = BatchNormalization()(block2_w1_mlp)
+block2_a2_mlp = Activation('relu')(block2_bn2_mlp)
+block2_w2_mlp = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2_mlp) 
+MLP = Model(input=calibInput_mlp, output=block2_w2_mlp)
+MLP.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
+               cf.MMD(block2_w2_mlp,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+
+###########################
+###### load MMD nets ######
+###########################
+# we load two CyTOF samples 
+
+data = 'person1_baseline'
+
+if data =='person1_baseline': 
+    ResNet.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet_weights.h5'))  
+    MLP.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP_weights.h5'))  
+if data =='person2_baseline': 
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_ResNet.h5'))  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_MLP.h5'))  
+if data =='person1_3month': 
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet.h5'))  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_MLP.h5'))  
+if data =='person2_3month':  
+    ResNet =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet.h5'))  
+    MLP =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP.h5'))  
+   
 
 ##############################
 ###### evaluate results ######
@@ -140,8 +207,8 @@ for i in range(target.shape[1]):
        
 ##################################### Correlation matrices ##############################################
 corrB = np.corrcoef(source, rowvar=0)
-corrA_resNet = np.corrcoef(projection_after_ResNet, rowvar=0)
-corrA_MLP = np.corrcoef(projection_after_ResNet, rowvar=0)
+corrA_resNet = np.corrcoef(calibratedSource_resNet, rowvar=0)
+corrA_MLP = np.corrcoef(calibratedSource_MLP, rowvar=0)
 
 corrT = np.corrcoef(target, rowvar=0)
 FB = corrT - corrB
