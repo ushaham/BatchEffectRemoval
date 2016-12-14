@@ -171,7 +171,7 @@ target_sample_pca = pca.transform(target)
 projection_before = pca.transform(source)
 projection_after_ResNet = pca.transform(calibratedSource_resNet)
 projection_after_MLP = pca.transform(calibratedSource_MLP)
-
+ 
 # choose PCs to plot
 pc1 = 0
 pc2 = 1
