@@ -145,9 +145,17 @@ block2_bn2_1 = BatchNormalization()(block2_w1_1)
 block2_a2_1 = Activation('relu')(block2_bn2_1)
 block2_w2_1 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2_1) 
 block2_output_1 = merge([block2_w2_1, block1_output_1], mode = 'sum')
-ResNet1 = Model(input=calibInput_1, output=block2_output_1)
+block3_bn1_1 = BatchNormalization()(block2_output_1)
+block3_a1_1 = Activation('relu')(block3_bn1_1)
+block3_w1_1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a1_1) 
+block3_bn2_1 = BatchNormalization()(block3_w1_1)
+block3_a2_1 = Activation('relu')(block3_bn2_1)
+block3_w2_1 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a2_1) 
+block3_output_1 = merge([block3_w2_1, block2_output_1], mode = 'sum')
+
+ResNet1 = Model(input=calibInput_1, output=block3_output_1)
 ResNet1.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
-               cf.MMD(block2_output_1,target1,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+               cf.MMD(block3_output_1,target1,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 
 if data1 =='person1_baseline': 
     ResNet1.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet_weights.h5'))  
@@ -173,9 +181,17 @@ block2_bn2_2 = BatchNormalization()(block2_w1_2)
 block2_a2_2 = Activation('relu')(block2_bn2_2)
 block2_w2_2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2_2) 
 block2_output_2 = merge([block2_w2_2, block1_output_2], mode = 'sum')
-ResNet2 = Model(input=calibInput_2, output=block2_output_2)
+block3_bn1_2 = BatchNormalization()(block2_output_2)
+block3_a1_2 = Activation('relu')(block3_bn1_2)
+block3_w1_2 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a1_2) 
+block3_bn2_2 = BatchNormalization()(block3_w1_2)
+block3_a2_2 = Activation('relu')(block3_bn2_2)
+block3_w2_2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a2_2) 
+block3_output_2 = merge([block3_w2_2, block2_output_2], mode = 'sum')
+
+ResNet2 = Model(input=calibInput_2, output=block3_output_2)
 ResNet2.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
-               cf.MMD(block2_output_2,target2,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+               cf.MMD(block3_output_2,target2,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 
 if data2 =='person1_baseline': 
     ResNet2.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet_weights.h5'))  
