@@ -47,7 +47,7 @@ def my_init (shape, name = None):
 #######################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
+data = 'person1_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -163,7 +163,6 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
  
 '''
 # save models
-autoencoder.save(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))                 
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet.h5'))  
+autoencoder.save(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))                 
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet_weights.h5'))  
 '''
-calibMMDNet.save(os.path.join(io.DeepLearningRoot(),'savedModels/test.h5'))                 
