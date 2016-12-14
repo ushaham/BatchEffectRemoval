@@ -37,7 +37,9 @@ l2_penalty_ae = 1e-2
 #MMD net configuration
 mmdNetLayerSizes = [25, 25]
 l2_penalty = 1e-2
-init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
+#init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
+def my_init (shape, name = None):
+    return initializations.normal(shape, scale=.1e-4, name=name)
 
 
 #######################
@@ -89,16 +91,16 @@ target = preprocessor.transform(target)
 calibInput = Input(shape=(inputDim,))
 block1_bn1 = BatchNormalization()(calibInput)
 block1_a1 = Activation('relu')(block1_bn1)
-block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a1) 
+block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a1) 
 block1_bn2 = BatchNormalization()(block1_w1)
 block1_a2 = Activation('relu')(block1_bn2)
-block1_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block1_a2) 
+block1_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a2) 
 block2_bn1 = BatchNormalization()(block1_w2)
 block2_a1 = Activation('relu')(block2_bn1)
-block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a1) 
+block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a1) 
 block2_bn2 = BatchNormalization()(block2_w1)
 block2_a2 = Activation('relu')(block2_bn2)
-block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = init)(block2_a2) 
+block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2) 
 
 calibMMDNet = Model(input=calibInput, output=block2_w2)
 
@@ -146,5 +148,5 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
 
 '''
 # save model
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP.h5'))  
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_MLP_weights.h5'))  
 '''
