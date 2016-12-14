@@ -27,7 +27,7 @@ from numpy import genfromtxt
 import sklearn.preprocessing as prep
 
 # configuration hyper parameters
-denoise = True # whether or not to train a denoising autoencoder to remover the zeros
+denoise = True # whether or not to train a denoising autoencoder to remove the zeros
 keepProb=.8
 
 # AE confiduration
@@ -47,7 +47,7 @@ def my_init (shape, name = None):
 #######################
 # we load two CyTOF samples 
 
-data = 'person1_3month'
+data = 'person1_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -163,6 +163,6 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
  
 '''
 # save models
-autoencoder.save(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))                 
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet_weights.h5'))  
+autoencoder.save(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))                 
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_ResNet_weights.h5'))  
 '''
