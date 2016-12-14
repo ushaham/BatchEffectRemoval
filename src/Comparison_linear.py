@@ -110,9 +110,16 @@ block2_bn2 = BatchNormalization()(block2_w1)
 block2_a2 = Activation('relu')(block2_bn2)
 block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2) 
 block2_output = merge([block2_w2, block1_output], mode = 'sum')
-ResNet = Model(input=calibInput, output=block2_output)
+block3_bn1 = BatchNormalization()(block2_output)
+block3_a1 = Activation('relu')(block3_bn1)
+block3_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a1) 
+block3_bn2 = BatchNormalization()(block3_w1)
+block3_a2 = Activation('relu')(block3_bn2)
+block3_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a2) 
+block3_output = merge([block3_w2, block2_output], mode = 'sum')
+ResNet = Model(input=calibInput, output=block3_output)
 ResNet.compile(optimizer='rmsprop', loss=lambda y_true,y_pred: 
-               cf.MMD(block2_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+               cf.MMD(block3_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
 
 ###########################
 ###### load MMD nets ######
