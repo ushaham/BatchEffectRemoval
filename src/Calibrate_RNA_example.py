@@ -4,6 +4,8 @@ Created on Sep 13, 2016
 @author: Uri Shaham
 ''' 
 
+import os.path
+from Calibration_Util import FileIO as io
 import keras.optimizers
 from keras.layers import Input, Dense, merge, BatchNormalization, Activation
 from keras.models import Model
@@ -58,11 +60,8 @@ def step_decay(epoch):
     return lrate
 lrate = LearningRateScheduler(step_decay)
  
-
-#dataPath = os.path.join(io.DeepLearningRoot(),'Data/RNA/second/new/data_2rep_std.csv')
-#dataPath = '/raid3/DropSeq/Retina/Second/data_2rep_std.csv'
-#dataPath = '/raid3/DropSeq/Retina/Second/standardizedData2_varGenes.csv'
-dataPath = '/raid3/DropSeq/Retina/Second/Data2_standardized_37PCs.csv'
+#dataPath = '/raid3/DropSeq/Retina/Second/Data2_standardized_37PCs.csv'
+dataPath = os.path.join(io.DeepLearningRoot(),'Data/Data2_standardized_37PCs.csv')
 data = genfromtxt(dataPath, delimiter=',', skip_header=0)
 #data = np.transpose(data)
 if lowRankApprox:
@@ -166,5 +165,5 @@ cal_filename = '/raid3/RNA_second_calibratedData.csv'
 savetxt(cal_filename, calibratedData, delimiter = ",")
 
 # save model
-calibMMDNet.save(os.path.join(io.DeepLearningRoot(),'savedModels/RNA_ResNet.h5'))  
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/RNA_ResNet.h5'))  
 '''
