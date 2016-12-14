@@ -35,7 +35,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
+data = 'person2_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -180,11 +180,11 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_MLP[:,pc1], projection_after_MLP[:,pc2], axis1, axis2)
 
 ##################################### qualitative evaluation: per-marker empirical cdfs #####################################
-
-for i in range(target.shape[1]):
+# plot a few markers before and after calibration
+for i in range(np.min([10,target.shape[1]])):
     targetMarker = target[:,i]
     beforeMarker = source[:,i]
-    afterMarker = projection_after_ResNet[:,i]
+    afterMarker = calibratedSource_resNet[:,i]
     m = np.min([np.min(targetMarker), np.min(beforeMarker), np.min(afterMarker)])
     M = np.max([np.max(targetMarker), np.max(beforeMarker), np.max(afterMarker)])
     x = np.linspace(m, M, num=100)
@@ -204,6 +204,8 @@ for i in range(target.shape[1]):
     plt.show()
        
 ##################################### Correlation matrices ##############################################
+# compute the correlation matrices C_source, C_target before and after calibration 
+# and plot a histogram of the values of C_diff = C_source-C_target
 corrB = np.corrcoef(source, rowvar=0)
 corrA_resNet = np.corrcoef(calibratedSource_resNet, rowvar=0)
 corrA_MLP = np.corrcoef(calibratedSource_MLP, rowvar=0)
@@ -222,6 +224,29 @@ print('norm before calibration:         ', str(NB))
 print('norm after calibration (resNet): ', str(NA_resNet)) 
 print('norm after calibration (MLP):    ', str(NA_MLP)) 
 
+
+'''
+patient 1_baseline:
+norm before calibration:          3.13282024726
+norm after calibration (resNet):  2.54434524732
+norm after calibration (MLP):     3.84227336367
+
+patient 2_baseline:
+norm before calibration:          2.52701517319
+norm after calibration (resNet):  1.56590447629
+norm after calibration (MLP):     2.10564254635
+
+patient 1_3month:
+norm before calibration:          1.33466077191
+norm after calibration (resNet):  2.82159111885
+norm after calibration (MLP):     4.61930150125
+
+patient 2_3month:
+norm before calibration:          2.05579245152
+norm after calibration (resNet):  3.45321065574
+norm after calibration (MLP):     3.4712589682
+'''
+
 fa_resNet = FA_resNet.flatten()
 fa_MLP = FA_MLP.flatten()
 fb = FB.flatten()
@@ -238,6 +263,7 @@ plt.yticks([])
 plt.show()
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
+
 sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
 targetInds = np.random.randint(low=0, high = target.shape[0], size = 1000)
 
@@ -249,6 +275,28 @@ print('MMD before calibration:         ' + str(mmd_before))
 print('MMD after calibration (resNet): ' + str(mmd_after_resNet))
 print('MMD after calibration (MLP):    ' + str(mmd_after_MLP))
 
+'''
+patient 1_baseline:
+MMD before calibration:         0.679205
+MMD after calibration (resNet): 0.291898
+MMD after calibration (MLP):    0.362767
+
+patient 2_baseline:
+MMD before calibration:         0.618438
+MMD after calibration (resNet): 0.275275
+MMD after calibration (MLP):    0.34958
+
+patient 1_3month:
+MMD before calibration:         0.731892
+MMD after calibration (resNet): 0.381757
+MMD after calibration (MLP):    0.350164
+
+patient 2_3month:
+MMD before calibration:         0.691358
+MMD after calibration (resNet): 0.305009
+MMD after calibration (MLP):    0.382219
+
+'''
 
 ##################################### CD8 sub-population #####################################
 sourceLabels = genfromtxt(sourceLabelPath, delimiter=',', skip_header=0)
