@@ -38,8 +38,8 @@ standardize = False
 mmdNetLayerSizes = [50,50,50]
 #l2_penalty = 0e-3
 l2_penalty2 = 1e-2
-#init = 'glorot_normal' 
-init = lambda shape, name: initializations.normal(shape, scale=.1e-4, name=name)
+init = 'glorot_normal' 
+#init = lambda shape, name: initializations.normal(shape, scale=.1e-4, name=name)
 #dropoutProb = .0
 
 if dataset == 'raw':
