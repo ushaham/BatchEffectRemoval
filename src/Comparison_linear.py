@@ -38,18 +38,26 @@ data = 'person2_3month'
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))   
 if data =='person2_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
 if data =='person1_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_3month_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_3month_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_DAE.h5'))    
 if data =='person2_3month':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month.csv')
     targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month.csv')
+    sourceLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_3month_label.csv')
+    targetLabelPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_3month_label.csv')
     autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_DAE.h5'))   
    
 source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
@@ -239,3 +247,23 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_be
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_z[:,pc1], projection_after_z[:,pc2])
 sh.scatterHist(target_after_pca[:,pc1], target_after_pca[:,pc2], projection_after_pca[:,pc1], projection_after_pca[:,pc2])
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_net[:,pc1], projection_after_net[:,pc2])
+
+sourceLabels = genfromtxt(sourceLabelPath, delimiter=',', skip_header=0)
+targetLabels = genfromtxt(targetLabelPath, delimiter=',', skip_header=0)
+
+source_subPop = source[sourceLabels==1]
+resNetCalibSubPop = calibratedSource_resNet[sourceLabels==1]
+Z_CalibSubPop = calibratedSource_Z[sourceLabels==1]
+pca_CalibSubPop = calibratedSource_pca[sourceLabels==1]
+target_subPop = target[targetLabels==1]
+
+marker1 = 13 #17 'IFNg'
+marker2 = 19
+
+axis1 = 'CD28'
+axis2 = 'GZB'
+
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], source_subPop[:,marker1], source_subPop[:,marker2], axis1, axis2)
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], resNetCalibSubPop[:,marker1], resNetCalibSubPop[:,marker2], axis1, axis2)
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], Z_CalibSubPop[:,marker1], Z_CalibSubPop[:,marker2], axis1, axis2)
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], pca_CalibSubPop[:,marker1], pca_CalibSubPop[:,marker2], axis1, axis2)

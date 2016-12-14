@@ -10,12 +10,10 @@ from Calibration_Util import FileIO as io
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib import pyplot as plt
 import CostFunctions as cf
 from sklearn import decomposition
 from keras import backend as K
 import ScatterHist as sh
-from statsmodels.distributions.empirical_distribution import ECDF
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
 from keras.models import load_model
@@ -29,18 +27,13 @@ from keras.models import Model
 # configuration hyper parameters
 denoise = True # whether or not to train a denoising autoencoder to remover the zeros
 
-init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
-def init (shape, name = None):
-    return initializations.normal(shape, scale=.1e-4, name=name)
-setattr(initializations, 'init', init)
-
 ######################
 ###### get data ######
 ######################
 # we load two CyTOF samples 
 
 data1 = 'person1_baseline'
-data2 = 'person1_month'
+data2 = 'person1_3month'
 
 if data1 =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -114,7 +107,7 @@ if denoise:
     source1 = autoencoder1.predict(source1)
     target1 = autoencoder1.predict(target1)
     source2 = autoencoder2.predict(source2)
-    source2 = autoencoder2.predict(source2)
+    target2 = autoencoder2.predict(target2)
 
 # rescale source to have zero mean and unit variance
 # apply same transformation to the target
@@ -210,6 +203,7 @@ calibration_21 =  ResNet2.predict(source1)
 pca = decomposition.PCA(n_components=2)
 pca.fit(target1)
 target_sample_pca = np.dot(target1, pca.components_[[0,1]].transpose())
+other_target_pca = np.dot(target2, pca.components_[[0,1]].transpose())
 projection_before = np.dot(source1, pca.components_[[0,1]].transpose())
 projection_org = np.dot(calibration_11, pca.components_[[0,1]].transpose())
 projection_cross = np.dot(calibration_21, pca.components_[[0,1]].transpose())
@@ -221,10 +215,13 @@ axis2 = 'PC'+str(pc2)
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2], axis1, axis2)
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_org[:,pc1], projection_org[:,pc2], axis1, axis2)
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_cross[:,pc1], projection_cross[:,pc2], axis1, axis2)
+sh.scatterHist(other_target_pca[:,pc1], other_target_pca[:,pc2], projection_cross[:,pc1], projection_cross[:,pc2], axis1, axis2)
+
 
 pca = decomposition.PCA(n_components=2)
 pca.fit(target2)
 target_sample_pca = np.dot(target2, pca.components_[[0,1]].transpose())
+other_target_pca = np.dot(target1, pca.components_[[0,1]].transpose())
 projection_before = np.dot(source2, pca.components_[[0,1]].transpose())
 projection_org = np.dot(calibration_22, pca.components_[[0,1]].transpose())
 projection_cross = np.dot(calibration_12, pca.components_[[0,1]].transpose())
@@ -236,6 +233,7 @@ axis2 = 'PC'+str(pc2)
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2], axis1, axis2)
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_org[:,pc1], projection_org[:,pc2], axis1, axis2)
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_cross[:,pc1], projection_cross[:,pc2], axis1, axis2)
+sh.scatterHist(other_target_pca[:,pc1], other_target_pca[:,pc2], projection_cross[:,pc1], projection_cross[:,pc2], axis1, axis2)
 
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
@@ -250,7 +248,7 @@ mmd_after_11 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_
 mmd_after_22 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_22[sourceInds]), K.variable(value=target2[targetInds])))
 
 mmd_after_12 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_21[sourceInds]), K.variable(value=target1[targetInds])))
-mmd_after_21 = K.eval(cf.MMD(source1,target1).cost(K.variable(value=calibration_12[sourceInds]), K.variable(value=target2[targetInds])))
+mmd_after_21 = K.eval(cf.MMD(source2,target2).cost(K.variable(value=calibration_12[sourceInds]), K.variable(value=target2[targetInds])))
 
 
 print('patient 1: MMD to target1 before calibration:        ' + str(mmd_before1))
@@ -260,3 +258,23 @@ print('patient 2: MMD to target2 before calibration:        ' + str(mmd_before2)
 print('patient 2: MMD to target2 after calibration (net 2): ' + str(mmd_after_22))
 print('patient 2: MMD to target2 after calibration (net 1): ' + str(mmd_after_12))
 
+'''
+p1_base, p1_3month:
+patient 1: MMD to target1 before calibration:        0.702666
+patient 1: MMD to target1 after calibration (net 1): 0.301217
+patient 1: MMD to target1 after calibration (net 2): 0.630393
+patient 2: MMD to target2 before calibration:        0.841727
+patient 2: MMD to target2 after calibration (net 2): 0.46446
+patient 2: MMD to target2 after calibration (net 1): 0.581634
+
+
+
+
+p2_base, p2_3month:
+
+
+
+
+
+
+p1_base, p2_base
