@@ -33,7 +33,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
+data = 'person2_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -199,36 +199,37 @@ for i in range(5):
     mmd_after_pca[i] = K.eval(cf.MMD(calibratedSource_pca,calibratedTarget_pca).cost(K.variable(value=calibratedSource_pca[sourceInds]), K.variable(value=calibratedTarget_pca[targetInds])))
     mmd_after_resNet[i] = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
 
-print('MMD before calibration:         ' + str(np.mean(mmd_before)))
-print('MMD after calibration (Z):      ' + str(np.mean(mmd_after_Z)))
-print('MMD after calibration (PCA):    ' + str(np.mean(mmd_after_pca)))
-print('MMD after calibration (resNet): ' + str(np.mean(mmd_after_resNet)))
+
+print('MMD before calibration:          ' + str(np.mean(mmd_before))+'pm '+str(np.std(mmd_before)))
+print('MMD after calibration (Z):       ' + str(np.mean(mmd_after_Z))+'pm '+str(np.std(mmd_after_Z)))
+print('MMD after calibration (PCA):     ' + str(np.mean(mmd_after_pca))+'pm '+str(np.std(mmd_after_pca)))
+print('MMD after calibration (resNet):  ' + str(np.mean(mmd_after_resNet))+'pm '+str(np.std(mmd_after_resNet)))
 
 
 '''
 patient 1_baseline:
-MMD before calibration:         0.659673047066
-MMD after calibration (Z):      0.273418438435
-MMD after calibration (PCA):    0.400669789314
-MMD after calibration (resNet): 0.271205967665
+MMD before calibration:          0.658845198154pm 0.0275670921996
+MMD after calibration (Z):       0.2682092309  pm 0.0149490092399
+MMD after calibration (PCA):     0.382372808456pm 0.0214676670154
+MMD after calibration (resNet):  0.273605012894pm 0.0191134302195
 
 patient 2_baseline:
-MMD before calibration:         0.560077631474
-MMD after calibration (Z):      0.242285305262
-MMD after calibration (PCA):    0.384669202566
-MMD after calibration (resNet): 0.179357543588
+MMD before calibration:          0.566467106342pm 0.00920023819038
+MMD after calibration (Z):       0.252539759874pm 0.00326543598136
+MMD after calibration (PCA):     0.390312641859pm 0.0128401136905
+MMD after calibration (resNet):  0.182156163454pm 0.0105230273331
 
 patient 1_3month:
-MMD before calibration:         0.600518524647
-MMD after calibration (Z):      0.310598909855
-MMD after calibration (PCA):    0.451330018044
-MMD after calibration (resNet): 0.257037818432
+MMD before calibration:          0.591536152363pm 0.0124899670656
+MMD after calibration (Z):       0.302636575699pm 0.00507544229121
+MMD after calibration (PCA):     0.441723245382pm 0.0130247356724
+MMD after calibration (resNet):  0.252806773782pm 0.0139724251926
 
 patient 2_3month:
-MMD before calibration:         0.71129847765
-MMD after calibration (Z):      0.31992919445
-MMD after calibration (PCA):    0.394449162483
-MMD after calibration (resNet): 0.176110082865
+MMD before calibration:          0.691931259632pm 0.0210479195603
+MMD after calibration (Z):       0.308583420515pm 0.0111125870826
+MMD after calibration (PCA):     0.379308360815pm 0.0139506508277
+MMD after calibration (resNet):  0.179382380843pm 0.0092942939681
 
 
 '''

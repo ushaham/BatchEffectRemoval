@@ -35,7 +35,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person2_3month'
+data = 'person2_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
