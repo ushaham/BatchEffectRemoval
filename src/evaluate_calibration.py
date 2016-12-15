@@ -35,7 +35,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person1_3month'
+data = 'person2_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -314,17 +314,16 @@ MMD after calibration (MLP):    0.18383770287
 MMD target-target:              0.123082661629
 
 patient 1_3month:
-MMD before calibration:         0.596024
-MMD after calibration (resNet): 0.259021
-MMD after calibration (MLP):    0.29192
-MMD target-target:              0.126443
-
+MMD before calibration:         0.581781625748
+MMD after calibration (resNet): 0.252171593904
+MMD after calibration (MLP):    0.269683659077
+MMD target-target:              0.127306644619
 
 patient 2_3month:
-MMD before calibration:         0.69402
-MMD after calibration (resNet): 0.185344
-MMD after calibration (MLP):    0.235985
-MMD target-target:              0.126683
+MMD before calibration:         0.698698282242
+MMD after calibration (resNet): 0.174275991321
+MMD after calibration (MLP):    0.217219734192
+MMD target-target:              0.128331105411
 
 '''
 

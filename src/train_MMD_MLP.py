@@ -22,7 +22,6 @@ from sklearn import decomposition
 from keras.callbacks import LearningRateScheduler
 import math
 import ScatterHist as sh
-from keras import initializations
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
 
