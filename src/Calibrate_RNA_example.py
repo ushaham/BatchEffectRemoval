@@ -148,5 +148,5 @@ cal_filename = '/raid3/RNA_second_calibratedData.csv'
 savetxt(cal_filename, calibratedData, delimiter = ",")
 
 # save model
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/RNA_ResNet.h5'))  
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/RNA_ResNet_weights.h5'))  
 '''
