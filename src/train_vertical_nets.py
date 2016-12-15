@@ -49,8 +49,8 @@ def my_init (shape, name = None):
 #######################
 # we load two CyTOF samples 
 
-sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
-targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
+sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
+targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
 
 source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
 target = genfromtxt(targetPath, delimiter=',', skip_header=0)
@@ -60,8 +60,8 @@ target = dh.preProcessCytofData(target)
 source = dh.preProcessCytofData(source) 
 
 if denoise:
-    autoencoder_s =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
-    autoencoder_t =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
+    autoencoder_s =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
+    autoencoder_t =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
     source = autoencoder_s.predict(source)
     target = autoencoder_t.predict(target)
 
@@ -148,5 +148,5 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
  
 '''
 # save models
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_2_baseline_weights.h5'))  
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_1_baseline_weights.h5'))  
 '''
