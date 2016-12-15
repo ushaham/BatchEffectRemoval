@@ -146,7 +146,7 @@ calibratedSource =  calibMMDNet.predict(source)
 calibratedData = np.concatenate([calibratedData, calibratedSource], axis=0)
 '''
 # save calibrated data
-cal_filename = '/raid3/RNA_second_calibratedData.csv'    
+cal_filename = '/raid3/uri/RNA_second_calibratedData1215.csv'    
 savetxt(cal_filename, calibratedData, delimiter = ",")
  
 # save model
