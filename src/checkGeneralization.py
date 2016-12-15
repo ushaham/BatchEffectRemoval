@@ -68,10 +68,10 @@ p2d1_pp = prep.StandardScaler().fit(p2d1)
 p2d2_pp = prep.StandardScaler().fit(p2d2)
 
 '''
-net1 maps p1d1 to p2d1
-net2 maps p2d1 to p2d2
-net3 maps p2d2 to p1d2
-net4 maps p1d1 to p1d2
+net1 maps p1d1 to p2d1 (Nd1)
+net2 maps p2d1 to p2d2 (Np2)
+net3 maps p2d2 to p1d2 (Nd2)
+net4 maps p1d1 to p1d2 (Nd1)
 '''
 net1_target = p1d1_pp.transform(p2d1) 
 net2_target = p2d1_pp.transform(p2d2)
@@ -248,20 +248,24 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_lo
 sourceInds = np.random.randint(low=0, high = p1d1.shape[0], size = 1000)
 targetInds = np.random.randint(low=0, high = p1d2.shape[0], size = 1000)
 
+mmd_before = np.zeros(5)
+mmd_after_short = np.zeros(5)
+mmd_after_long = np.zeros(5)
 
-mmd_before1 = K.eval(cf.MMD(p1d1,p1d2).cost(K.variable(value=net4_source[sourceInds]), K.variable(value=net4_target[targetInds])))
-mmd_after_short = K.eval(cf.MMD(p1d1,p1d2).cost(K.variable(value=net4Calib[sourceInds]), K.variable(value=net4_target[targetInds])))
-mmd_after_long = K.eval(cf.MMD(p1d1,p1d2).cost(K.variable(value=net1_3Calib[sourceInds]), K.variable(value=net4_target[targetInds])))
+for i in range(5):
+    mmd_before[i] = K.eval(cf.MMD(net4_source,net4_target).cost(K.variable(value=net4_source[sourceInds]), K.variable(value=net4_target[targetInds])))
+    mmd_after_short[i] = K.eval(cf.MMD(net4Calib,net4_target).cost(K.variable(value=net4Calib[sourceInds]), K.variable(value=net4_target[targetInds])))
+    mmd_after_long[i] = K.eval(cf.MMD(net1_3Calib,net4_target).cost(K.variable(value=net1_3Calib[sourceInds]), K.variable(value=net4_target[targetInds])))
 
 
-print('patient 1: MMD to p1d2 before calibration:             ' + str(mmd_before1))
-print('patient 1: MMD to p1d2 after calibration (short path): ' + str(mmd_after_short))
-print('patient 1: MMD to p1d2 after calibration (long path):  ' + str(mmd_after_long))
+print('patient 1: MMD to p1d2 before calibration:             ' + str(np.mean(mmd_before))+'pm '+str(np.std(mmd_before)))
+print('patient 1: MMD to p1d2 after calibration (short path): ' + str(np.mean(mmd_after_short))+'pm '+str(np.std(mmd_after_short)))
+print('patient 1: MMD to p1d2 after calibration (long path):  ' + str(np.mean(mmd_after_long))+'pm '+str(np.std(mmd_after_long)))
 
 '''
-patient 1: MMD to p1d2 before calibration:             0.539888
-patient 1: MMD to p1d2 after calibration (short path): 0.25142
-patient 1: MMD to p1d2 after calibration (long path):  0.587453
+patient 1: MMD to p1d2 before calibration:             0.546334838867pm 0.00166775085676
+patient 1: MMD to p1d2 after calibration (short path): 0.261684668064pm 0.000505476422196
+patient 1: MMD to p1d2 after calibration (long path):  0.256404978037pm 0.000145956854391
 
 '''
 
