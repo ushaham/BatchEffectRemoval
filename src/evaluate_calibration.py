@@ -35,7 +35,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person2_baseline'
+data = 'person1_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -189,8 +189,11 @@ pc1 = 0
 pc2 = 1
 axis1 = 'PC'+str(pc1)
 axis2 = 'PC'+str(pc2)
+# before calibration
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2], axis1, axis2)
+# after calibration using ResNet
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_ResNet[:,pc1], projection_after_ResNet[:,pc2], axis1, axis2)
+# after calibration using MLP
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_MLP[:,pc1], projection_after_MLP[:,pc2], axis1, axis2)
 
 ##################################### qualitative evaluation: per-marker empirical cdfs #####################################
@@ -246,9 +249,9 @@ norm after calibration (resNet):  2.54434524732
 norm after calibration (MLP):     3.84227336367
 
 patient 2_baseline:
-norm before calibration:          2.52701517319
-norm after calibration (resNet):  1.56590447629
-norm after calibration (MLP):     2.10564254635
+norm before calibration:          1.82756691338
+norm after calibration (resNet):  1.55978596793
+norm after calibration (MLP):     3.0505300267
 
 patient 1_3month:
 norm before calibration:          1.33466077191
@@ -256,9 +259,9 @@ norm after calibration (resNet):  2.82159111885
 norm after calibration (MLP):     4.61930150125
 
 patient 2_3month:
-norm before calibration:          2.05579245152
-norm after calibration (resNet):  3.45321065574
-norm after calibration (MLP):     3.4712589682
+norm before calibration:          1.71908025335
+norm after calibration (resNet):  1.93556138404
+norm after calibration (MLP):     4.37504378244
 '''
 
 fa_resNet = FA_resNet.flatten()
@@ -271,44 +274,57 @@ f[:,1] = fa_resNet
 f[:,2] = fa_MLP
 
 fig = plt.figure()
-plt.hist(f, bins = 20, normed=True, histtype='bar')
-plt.legend(['before calib.', 'ResNet calib.', 'MLP calib.'], loc=1)
+plt.hist(f[:,:2], bins = 10, normed=True, histtype='bar')
+plt.legend(['before calib.', 'ResNet calib.', 'MLP calib.'], loc=2)
 plt.yticks([])
 plt.show()
 ##################################### quantitative evaluation: MMD #####################################
 # MMD with the scales used for training 
+mmd_before = np.zeros(5)
+mmd_after_resNet = np.zeros(5)
+mmd_after_MLP = np.zeros(5)
+mmd_target_target = np.zeros(5)
 
-sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
-targetInds = np.random.randint(low=0, high = target.shape[0], size = 1000)
+for i in range(5):
+    sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
+    targetInds = np.random.randint(low=0, high = target.shape[0], size = 1000)
+    targetInds1 = np.random.randint(low=0, high = target.shape[0], size = 1000)
+    mmd_before[i] = K.eval(cf.MMD(source,target).cost(K.variable(value=source[sourceInds]), K.variable(value=target[targetInds])))
+    mmd_after_resNet[i] = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
+    mmd_after_MLP[i] = K.eval(cf.MMD(calibratedSource_MLP,target).cost(K.variable(value=calibratedSource_MLP[sourceInds]), K.variable(value=target[targetInds])))
+    mmd_target_target[i] = K.eval(cf.MMD(target,target).cost(K.variable(value=target[targetInds]), K.variable(value=target[targetInds1])))
 
-mmd_before = K.eval(cf.MMD(source,target).cost(K.variable(value=source[sourceInds]), K.variable(value=target[targetInds])))
-mmd_after_resNet = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
-mmd_after_MLP = K.eval(cf.MMD(calibratedSource_MLP,target).cost(K.variable(value=calibratedSource_MLP[sourceInds]), K.variable(value=target[targetInds])))
 
-print('MMD before calibration:         ' + str(mmd_before))
-print('MMD after calibration (resNet): ' + str(mmd_after_resNet))
-print('MMD after calibration (MLP):    ' + str(mmd_after_MLP))
+print('MMD before calibration:         ' + str(np.mean(mmd_before)))
+print('MMD after calibration (resNet): ' + str(np.mean(mmd_after_resNet)))
+print('MMD after calibration (MLP):    ' + str(np.mean(mmd_after_MLP)))
+print('MMD target-target:              ' + str(np.mean(mmd_target_target)))
 
 '''
 patient 1_baseline:
-MMD before calibration:         0.679205
-MMD after calibration (resNet): 0.291898
-MMD after calibration (MLP):    0.362767
+MMD before calibration:         0.660470056534
+MMD after calibration (resNet): 0.275813871622
+MMD after calibration (MLP):    0.546560025215
+MMD target-target:              0.129335947335
 
 patient 2_baseline:
-MMD before calibration:         0.618438
-MMD after calibration (resNet): 0.275275
-MMD after calibration (MLP):    0.34958
+MMD before calibration:         0.562546253204
+MMD after calibration (resNet): 0.182793694735
+MMD after calibration (MLP):    0.18383770287
+MMD target-target:              0.123082661629
 
 patient 1_3month:
-MMD before calibration:         0.731892
-MMD after calibration (resNet): 0.381757
-MMD after calibration (MLP):    0.350164
+MMD before calibration:         0.596024
+MMD after calibration (resNet): 0.259021
+MMD after calibration (MLP):    0.29192
+MMD target-target:              0.126443
+
 
 patient 2_3month:
-MMD before calibration:         0.691358
-MMD after calibration (resNet): 0.305009
-MMD after calibration (MLP):    0.382219
+MMD before calibration:         0.69402
+MMD after calibration (resNet): 0.185344
+MMD after calibration (MLP):    0.235985
+MMD target-target:              0.126683
 
 '''
 
@@ -327,6 +343,9 @@ marker2 = 19
 axis1 = 'CD28'
 axis2 = 'GZB'
 
+# before calibration
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], source_subPop[:,marker1], source_subPop[:,marker2], axis1, axis2)
+# after calibration using ResNet
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], resNetCalibSubPop[:,marker1], resNetCalibSubPop[:,marker2], axis1, axis2)
+# after calibration using MLP (no shortcut connections)
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], mlpCalibSubPop[:,marker1], mlpCalibSubPop[:,marker2], axis1, axis2)

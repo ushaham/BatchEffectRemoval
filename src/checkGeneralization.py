@@ -33,7 +33,7 @@ denoise = True # whether or not to train a denoising autoencoder to remover the 
 # we load two CyTOF samples 
 
 data1 = 'person1_baseline'
-data2 = 'person1_3month'
+data2 = 'person2_baseline'
 
 if data1 =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -201,6 +201,13 @@ if data2 =='person1_3month':
     ResNet2.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person1_3month_ResNet_weights.h5'))  
 if data2 =='person2_3month':  
     ResNet2.load_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_ResNet_weights.h5'))  
+
+###############################################
+######### Train vertical nets ########
+###############################################
+patient1_source -> patient2_source
+
+patient2_target -> patient1_target
 
 ###############################################
 ######## evaluate generalization ability ######

@@ -33,7 +33,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person2_3month'
+data = 'person1_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -186,45 +186,49 @@ calibratedSource_pca = combinedDataRecon[n_target:,]
 ############## Evaluation: MMD ###############
 ##############################################
 # MMD with the scales used for training 
-sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
-targetInds = np.random.randint(low=0, high = target.shape[0], size = 1000)
+mmd_before = np.zeros(5)
+mmd_after_Z = np.zeros(5)
+mmd_after_pca = np.zeros(5)
+mmd_after_resNet = np.zeros(5)
 
-mmd_before = K.eval(cf.MMD(source,target).cost(K.variable(value=source[sourceInds]), K.variable(value=target[targetInds])))
-mmd_after_Z = K.eval(cf.MMD(calibratedSource_Z,target).cost(K.variable(value=calibratedSource_Z[sourceInds]), K.variable(value=target[targetInds])))
-mmd_after_pca = K.eval(cf.MMD(calibratedSource_pca,calibratedTarget_pca).cost(K.variable(value=calibratedSource_pca[sourceInds]), K.variable(value=calibratedTarget_pca[targetInds])))
-mmd_after_resNet = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
+for i in range(5):
+    sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
+    targetInds = np.random.randint(low=0, high = target.shape[0], size = 1000)
+    mmd_before[i] = K.eval(cf.MMD(source,target).cost(K.variable(value=source[sourceInds]), K.variable(value=target[targetInds])))
+    mmd_after_Z[i] = K.eval(cf.MMD(calibratedSource_Z,target).cost(K.variable(value=calibratedSource_Z[sourceInds]), K.variable(value=target[targetInds])))
+    mmd_after_pca[i] = K.eval(cf.MMD(calibratedSource_pca,calibratedTarget_pca).cost(K.variable(value=calibratedSource_pca[sourceInds]), K.variable(value=calibratedTarget_pca[targetInds])))
+    mmd_after_resNet[i] = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
 
-print('MMD before calibration:         ' + str(mmd_before))
-print('MMD after calibration (Z):      ' + str(mmd_after_Z))
-print('MMD after calibration (PCA):    ' + str(mmd_after_pca))
-print('MMD after calibration (resNet): ' + str(mmd_after_resNet))
+print('MMD before calibration:         ' + str(np.mean(mmd_before)))
+print('MMD after calibration (Z):      ' + str(np.mean(mmd_after_Z)))
+print('MMD after calibration (PCA):    ' + str(np.mean(mmd_after_pca)))
+print('MMD after calibration (resNet): ' + str(np.mean(mmd_after_resNet)))
 
 
 '''
 patient 1_baseline:
-MMD before calibration:         0.653323
-MMD after calibration (Z):      0.27581
-MMD after calibration (PCA):    0.403644
-MMD after calibration (resNet): 0.287906
+MMD before calibration:         0.659673047066
+MMD after calibration (Z):      0.273418438435
+MMD after calibration (PCA):    0.400669789314
+MMD after calibration (resNet): 0.271205967665
 
 patient 2_baseline:
-MMD before calibration:         0.572424
-MMD after calibration (Z):      0.239967
-MMD after calibration (PCA):    0.339116
-MMD after calibration (resNet): 0.272269
+MMD before calibration:         0.560077631474
+MMD after calibration (Z):      0.242285305262
+MMD after calibration (PCA):    0.384669202566
+MMD after calibration (resNet): 0.179357543588
 
 patient 1_3month:
-MMD before calibration:         0.674912
-MMD after calibration (Z):      0.27605
-MMD after calibration (PCA):    0.338919
-MMD after calibration (resNet): 0.356362
-
+MMD before calibration:         0.600518524647
+MMD after calibration (Z):      0.310598909855
+MMD after calibration (PCA):    0.451330018044
+MMD after calibration (resNet): 0.257037818432
 
 patient 2_3month:
-MMD before calibration:         0.667413
-MMD after calibration (Z):      0.325473
-MMD after calibration (PCA):    0.412792
-MMD after calibration (resNet): 0.304611
+MMD before calibration:         0.71129847765
+MMD after calibration (Z):      0.31992919445
+MMD after calibration (PCA):    0.394449162483
+MMD after calibration (resNet): 0.176110082865
 
 
 '''
@@ -249,10 +253,13 @@ target_after_pca = pca.transform(calibratedTarget_pca)
 projection_after_pca = pca.transform(calibratedSource_pca)
 projection_after_net = pca.transform(calibratedSource_resNet)
 
-
+# no calibration
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2])
+# z transform calibration
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_z[:,pc1], projection_after_z[:,pc2])
+# PCA calibration
 sh.scatterHist(target_after_pca[:,pc1], target_after_pca[:,pc2], projection_after_pca[:,pc1], projection_after_pca[:,pc2])
+#ResNet calibration
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_net[:,pc1], projection_after_net[:,pc2])
 
 sourceLabels = genfromtxt(sourceLabelPath, delimiter=',', skip_header=0)
@@ -264,13 +271,18 @@ Z_CalibSubPop = calibratedSource_Z[sourceLabels==1]
 pca_CalibSubPop = calibratedSource_pca[sourceLabels==1]
 target_subPop = target[targetLabels==1]
 
-marker1 = 13 #17 'IFNg'
-marker2 = 19
+marker1 = 1 #17 'IFNg'
+marker2 = 18
 
 axis1 = 'CD28'
 axis2 = 'GZB'
 
+# CD8 population plots
+# before calibration
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], source_subPop[:,marker1], source_subPop[:,marker2], axis1, axis2)
-sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], resNetCalibSubPop[:,marker1], resNetCalibSubPop[:,marker2], axis1, axis2)
+#Z transform calibration
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], Z_CalibSubPop[:,marker1], Z_CalibSubPop[:,marker2], axis1, axis2)
+# PCA calibration
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], pca_CalibSubPop[:,marker1], pca_CalibSubPop[:,marker2], axis1, axis2)
+# ResNet calibration
+sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], resNetCalibSubPop[:,marker1], resNetCalibSubPop[:,marker2], axis1, axis2)
