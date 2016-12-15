@@ -295,35 +295,35 @@ for i in range(5):
     mmd_target_target[i] = K.eval(cf.MMD(target,target).cost(K.variable(value=target[targetInds]), K.variable(value=target[targetInds1])))
 
 
-print('MMD before calibration:         ' + str(np.mean(mmd_before)))
-print('MMD after calibration (resNet): ' + str(np.mean(mmd_after_resNet)))
-print('MMD after calibration (MLP):    ' + str(np.mean(mmd_after_MLP)))
-print('MMD target-target:              ' + str(np.mean(mmd_target_target)))
+print('MMD before calibration:         ' + str(np.mean(mmd_before))+'pm '+str(np.std(mmd_before)))
+print('MMD after calibration (resNet): ' + str(np.mean(mmd_after_resNet))+'pm '+str(np.std(mmd_after_resNet)))
+print('MMD after calibration (MLP):    ' + str(np.mean(mmd_after_MLP))+'pm '+str(np.std(mmd_after_MLP)))
+print('MMD target-target:              ' + str(np.mean(mmd_target_target))+'pm '+str(np.std(mmd_target_target)))
 
 '''
 patient 1_baseline:
-MMD before calibration:         0.660470056534
-MMD after calibration (resNet): 0.275813871622
-MMD after calibration (MLP):    0.546560025215
-MMD target-target:              0.129335947335
+MMD before calibration:         0.661351621151pm 0.0139904003468
+MMD after calibration (resNet): 0.276116204262pm 0.011264850329
+MMD after calibration (MLP):    0.555564594269pm 0.00755540689759
+MMD target-target:              0.124748395383pm 0.00676599289844
 
 patient 2_baseline:
-MMD before calibration:         0.562546253204
-MMD after calibration (resNet): 0.182793694735
-MMD after calibration (MLP):    0.18383770287
-MMD target-target:              0.123082661629
+MMD before calibration:         0.562885713577pm 0.0135101220192
+MMD after calibration (resNet): 0.174006786942pm 0.0062234218113
+MMD after calibration (MLP):    0.181381601095pm 0.003422116291
+MMD target-target:              0.125652351975pm 0.00221482279506
 
 patient 1_3month:
-MMD before calibration:         0.581781625748
-MMD after calibration (resNet): 0.252171593904
-MMD after calibration (MLP):    0.269683659077
-MMD target-target:              0.127306644619
+MMD before calibration:         0.592805349827pm 0.00934089305222
+MMD after calibration (resNet): 0.248188710213pm 0.0184023434856
+MMD after calibration (MLP):    0.26518445313pm 0.0112023371323
+MMD target-target:              0.13021325618pm 0.00704988428735
 
 patient 2_3month:
-MMD before calibration:         0.698698282242
-MMD after calibration (resNet): 0.174275991321
-MMD after calibration (MLP):    0.217219734192
-MMD target-target:              0.128331105411
+MMD before calibration:         0.704139959812pm 0.0107800968919
+MMD after calibration (resNet): 0.173203766346pm 0.00241148665839
+MMD after calibration (MLP):    0.216522809863pm 0.0113629589643
+MMD target-target:              0.13207590878pm 0.00837963547824
 
 '''
 
