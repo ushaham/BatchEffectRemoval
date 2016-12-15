@@ -50,10 +50,12 @@ lrate = LearningRateScheduler(step_decay)
 patience = 50
 epochsDrop = 50.0
 
-dataPath = os.path.join(io.DeepLearningRoot(),'Data/Data2_standardized_37PCs.csv')
+dataPath = '/raid3/DropSeq/Retina/Second/1215/Data2_standardized_37PCs.csv'    
+#dataPath = os.path.join(io.DeepLearningRoot(),'Data/Data2_standardized_37PCs.csv')
 data = genfromtxt(dataPath, delimiter=',', skip_header=0)
     
-batchesPath = os.path.join(io.DeepLearningRoot(),'Data/batch.csv')
+batchesPath = '/raid3/DropSeq/Retina/Second/1215/batch.csv'  
+#batchesPath = os.path.join(io.DeepLearningRoot(),'Data/batch.csv')
 batches = genfromtxt(batchesPath, delimiter=',', skip_header=0) 
 
 targetBatch = 1
