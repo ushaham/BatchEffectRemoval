@@ -20,7 +20,7 @@ The MLP nets were trained using the script train_MMD_MLP.py.
 
 The script checkGeneralization.py was used to produce the results of section 4.2.4. The nets N_{d_1},N_{d_2} were trained using the script train_vertical_nets.py.
 
-The script Comparison_linear.py produces the results of section 4.2.5
+The script Comparison_linear.py produces the results of section 4.2.5.
 
 All scripts are written in Keras.
 
