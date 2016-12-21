@@ -24,4 +24,6 @@ The script Comparison_linear.py produces the results of section 4.2.5.
 
 All scripts are written in Keras.
 
+The script calibrationData2.R was used to produce the results for section 4.3, the calibration analysis on single cell RNA data, several custom functions loaded from funs.R.
+
 Any questions should be referred to Uri Shaham, uri.shaham@yale.edu.
