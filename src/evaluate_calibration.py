@@ -225,7 +225,7 @@ for i in range(np.min([10,target.shape[1]])):
     a1.set_xticklabels([])
     plt.legend(['target', 'before calibration', 'after calibration'], loc=0)
     plt.title(markerNames[i])
-    plt.show()
+    plt.show() 
        
 ##################################### Correlation matrices ##############################################
 # compute the correlation matrices C_source, C_target before and after calibration 
