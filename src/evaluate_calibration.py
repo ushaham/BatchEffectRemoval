@@ -35,7 +35,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
+data = 'person2_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -198,6 +198,12 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
 
 ##################################### qualitative evaluation: per-marker empirical cdfs #####################################
 # plot a few markers before and after calibration
+markerNames = ['89Y_CD45', '142Nd_CD19', '143Nd_CD127', '145Nd_CD4', 
+               '146Nd_CD8a', '147Sm_CD20', '149Sm_CD25', '151Eu_CD278-Beads',
+                '152Sm_TNFa', '153Eu_Baeds-Tim3', '155Gd_CD27', '156Gd_CD14', '159Tb_CCR7',
+                 '160Gd_CD28', '161Dy_CD152', '162Dy_FOXP3', '164Dy_CD45RO', '165Ho_Beads-INFg',
+                  '166Er_CD223', '167Er_GzB', '170Er_CD3', '172Yb_CD274', '174Yb_HLADR', '175Lu_Beads-PD1',
+                   '209Bi_CD11b']
 for i in range(np.min([10,target.shape[1]])):
     targetMarker = target[:,i]
     beforeMarker = source[:,i]
@@ -218,6 +224,7 @@ for i in range(np.min([10,target.shape[1]])):
     a1.plot(af_ecdf, color = 'green') 
     a1.set_xticklabels([])
     plt.legend(['target', 'before calibration', 'after calibration'], loc=0)
+    plt.title(markerNames[i])
     plt.show()
        
 ##################################### Correlation matrices ##############################################
