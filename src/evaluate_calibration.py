@@ -187,8 +187,8 @@ projection_after_MLP = pca.transform(calibratedSource_MLP)
 # choose PCs to plot
 pc1 = 0
 pc2 = 1
-axis1 = 'PC'+str(pc1)
-axis2 = 'PC'+str(pc2)
+axis1 = 'PC'+str(pc1+1)
+axis2 = 'PC'+str(pc2+1)
 # before calibration
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2], axis1, axis2)
 # after calibration using ResNet
