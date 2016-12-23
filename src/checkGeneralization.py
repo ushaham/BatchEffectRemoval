@@ -232,8 +232,8 @@ projection_long= pca.transform(net1_3Calib)
 
 pc1 = 0
 pc2 = 1
-axis1 = 'PC'+str(pc1)
-axis2 = 'PC'+str(pc2)
+axis1 = 'PC'+str(pc1+1)
+axis2 = 'PC'+str(pc2+1)
 # before calibration
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_before[:,pc1], projection_before[:,pc2], axis1, axis2)
 # direct calibration
@@ -283,7 +283,7 @@ marker1 = 13 #17 'IFNg'
 marker2 = 19
 
 axis1 = 'CD28'
-axis2 = 'GZB'
+axis2 = 'GzB'
 
 # before calibration
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], source_subPop[:,marker1], source_subPop[:,marker2], axis1, axis2)
