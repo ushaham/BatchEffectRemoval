@@ -198,12 +198,12 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
 
 ##################################### qualitative evaluation: per-marker empirical cdfs #####################################
 # plot a few markers before and after calibration
-markerNames = ['89Y_CD45', '142Nd_CD19', '143Nd_CD127', '145Nd_CD4', 
-               '146Nd_CD8a', '147Sm_CD20', '149Sm_CD25', '151Eu_CD278-Beads',
-                '152Sm_TNFa', '153Eu_Baeds-Tim3', '155Gd_CD27', '156Gd_CD14', '159Tb_CCR7',
-                 '160Gd_CD28', '161Dy_CD152', '162Dy_FOXP3', '164Dy_CD45RO', '165Ho_Beads-INFg',
-                  '166Er_CD223', '167Er_GzB', '170Er_CD3', '172Yb_CD274', '174Yb_HLADR', '175Lu_Beads-PD1',
-                   '209Bi_CD11b']
+markerNames = ['CD45', 'CD19', 'CD127', 'CD4', 
+               'CD8a', 'CD20', 'CD25', 'CD278-Beads',
+                'TNFa', 'Beads-Tim3', 'CD27', 'CD14', 'CCR7',
+                 'CD28', 'CD152', 'FOXP3', 'CD45RO', 'Beads-INFg',
+                  'CD223', 'GzB', 'CD3', 'CD274', 'HLADR', 'Beads-PD1',
+                   'CD11b']
 for i in range(np.min([10,target.shape[1]])):
     targetMarker = target[:,i]
     beforeMarker = source[:,i]
@@ -347,7 +347,7 @@ marker1 = 13 #17 'IFNg'
 marker2 = 19
 
 axis1 = 'CD28'
-axis2 = 'GZB'
+axis2 = 'GzB'
 
 # before calibration
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], source_subPop[:,marker1], source_subPop[:,marker2], axis1, axis2)
