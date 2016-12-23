@@ -22,9 +22,6 @@ def scatterHist(x1,x2, y1,y2, axis1='', axis2=''):
     
     # start with a rectangular Figure
     plt.figure(figsize=(8, 8))
-    plt.xlabel(axis1)
-    plt.ylabel(axis2)
-    plt.axis('off')
        
     axScatter = plt.axes(rect_scatter)
     axHistx = plt.axes(rect_histx)
@@ -36,8 +33,7 @@ def scatterHist(x1,x2, y1,y2, axis1='', axis2=''):
     
     # the scatter plot:
     axScatter.scatter(x1, x2, color = 'blue', s=3)
-    axScatter.scatter(y1, y2, color = 'red', s=3)
-
+    axScatter.scatter(y1, y2, color = 'red', s=3) 
 
 
     # now determine nice limits by hand:
@@ -61,6 +57,8 @@ def scatterHist(x1,x2, y1,y2, axis1='', axis2=''):
     axHistx.set_yticklabels([])
     axHisty.set_xticklabels([])
     axHisty.set_yticklabels([])
+    axScatter.set_xlabel(axis1, fontsize=15)
+    axScatter.set_ylabel(axis2, fontsize=15)
     
 
     plt.show()
