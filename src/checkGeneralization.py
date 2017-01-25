@@ -75,7 +75,7 @@ net4 maps p1d1 to p1d2 (Nd1)
 '''
 net1_target = p1d1_pp.transform(p2d1) 
 net2_target = p2d1_pp.transform(p2d2)
-net3_target = p1d1_pp.transform(p1d2)
+net3_target = p2d2_pp.transform(p1d2)
 net4_target = p1d1_pp.transform(p1d2) 
 
 net1_source = p1d1_pp.transform(p1d1) 
