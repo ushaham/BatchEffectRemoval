@@ -24,6 +24,14 @@ import math
 import ScatterHist as sh
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
+import os
+havedisplay = "DISPLAY" in os.environ
+#if we have a display use a plotting backend
+if havedisplay:
+    matplotlib.use('TkAgg')
+else:
+    matplotlib.use('Agg')
+
 
 # configuration hyper parameters
 denoise = True # whether or not to train a denoising autoencoder to remove the zeros
@@ -45,7 +53,7 @@ my_init =  'glorot_normal'
 #######################
 # we load two CyTOF samples 
 
-data = 'person2_3month'
+data = 'person2_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -71,7 +79,7 @@ inputDim = target.shape[1]
 
 if denoise:
     from keras.models import load_model
-    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_DAE.h5'))  
+    autoencoder =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
     source = autoencoder.predict(source)
     target = autoencoder.predict(target)
 
@@ -122,6 +130,8 @@ optimizer = keras.optimizers.rmsprop(lr=0.0)
 
 calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
                cf.MMD(block3_w2,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+K.get_session().run(tf.global_variables_initializer())
+
 sourceLabels = np.zeros(source.shape[0])
 calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate,mn.monitorMMD(source, target, calibMMDNet.predict),
@@ -152,5 +162,5 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_af
  
 '''
 # save model
-calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_3month_MLP_weights.h5'))  
+calibMMDNet.save_weights(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_MLP_weights.h5'))  
 '''

@@ -26,7 +26,6 @@ from keras.regularizers import l2
 from keras.models import Model
 
 
-
 # configuration hyper parameters
 denoise = True # whether or not to use a denoising autoencoder to remove the zeros
 
@@ -35,7 +34,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person2_baseline'
+data = 'person1_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -223,7 +222,7 @@ for i in range(np.min([10,target.shape[1]])):
     a1.plot(bf_ecdf, color = 'red') 
     a1.plot(af_ecdf, color = 'green') 
     a1.set_xticklabels([])
-    plt.legend(['target', 'before calibration', 'after calibration'], loc=0)
+    plt.legend(['target', 'before calibration', 'after calibration'], loc=0 ,prop={'size':16})
     plt.title(markerNames[i])
     plt.show() 
        
@@ -255,20 +254,39 @@ norm before calibration:          3.13282024726
 norm after calibration (resNet):  2.54434524732
 norm after calibration (MLP):     3.84227336367
 
+norm before calibration:          1.85079066344
+norm after calibration (resNet):  1.12045584613
+norm after calibration (MLP):     4.52484029036
+
+
 patient 2_baseline:
 norm before calibration:          1.82756691338
 norm after calibration (resNet):  1.55978596793
 norm after calibration (MLP):     3.0505300267
+
+norm before calibration:          2.03140656479
+norm after calibration (resNet):  2.45778933637
+norm after calibration (MLP):     3.01423626747
+
 
 patient 1_3month:
 norm before calibration:          1.33466077191
 norm after calibration (resNet):  2.82159111885
 norm after calibration (MLP):     4.61930150125
 
+norm before calibration:          1.73523843502
+norm after calibration (resNet):  1.9425327726
+norm after calibration (MLP):     3.44694799415
+
 patient 2_3month:
 norm before calibration:          1.71908025335
 norm after calibration (resNet):  1.93556138404
 norm after calibration (MLP):     4.37504378244
+
+norm before calibration:          1.54129477607
+norm after calibration (resNet):  2.37429050782
+norm after calibration (MLP):     4.17885040239
+
 '''
 
 fa_resNet = FA_resNet.flatten()
@@ -314,11 +332,24 @@ MMD after calibration (resNet): 0.276116204262pm 0.011264850329
 MMD after calibration (MLP):    0.555564594269pm 0.00755540689759
 MMD target-target:              0.124748395383pm 0.00676599289844
 
+MMD before calibration:         0.62958920002pm 0.0161919451551
+MMD after calibration (resNet): 0.200903004408pm 0.0102309073075
+MMD after calibration (MLP):    0.208249405026pm 0.00538096808766
+MMD target-target:              0.128288277984pm 0.00663844403116
+
+
 patient 2_baseline:
 MMD before calibration:         0.562885713577pm 0.0135101220192
 MMD after calibration (resNet): 0.174006786942pm 0.0062234218113
 MMD after calibration (MLP):    0.181381601095pm 0.003422116291
 MMD target-target:              0.125652351975pm 0.00221482279506
+
+MMD before calibration:         0.560064709187pm 0.0083670334435
+MMD after calibration (resNet): 0.157320341468pm 0.00402296904364
+MMD after calibration (MLP):    0.167843523622pm 0.0124973269436
+MMD target-target:              0.124340751767pm 0.00467257312906
+
+
 
 patient 1_3month:
 MMD before calibration:         0.592805349827pm 0.00934089305222
@@ -326,12 +357,22 @@ MMD after calibration (resNet): 0.248188710213pm 0.0184023434856
 MMD after calibration (MLP):    0.26518445313pm 0.0112023371323
 MMD target-target:              0.13021325618pm 0.00704988428735
 
+MMD before calibration:         0.628281378746pm 0.0155268535199
+MMD after calibration (resNet): 0.200033205748pm 0.0139403929511
+MMD after calibration (MLP):    0.292050713301pm 0.00580251300345
+MMD target-target:              0.126231913269pm 0.00727410856422
+
+
 patient 2_3month:
 MMD before calibration:         0.704139959812pm 0.0107800968919
 MMD after calibration (resNet): 0.173203766346pm 0.00241148665839
 MMD after calibration (MLP):    0.216522809863pm 0.0113629589643
 MMD target-target:              0.13207590878pm 0.00837963547824
 
+MMD before calibration:         0.655489087105pm 0.0182559933524
+MMD after calibration (resNet): 0.18482863605pm 0.0154300744509
+MMD after calibration (MLP):    0.221637094021pm 0.00684548294673
+MMD target-target:              0.129557539523pm 0.00635334169169
 '''
 
 ##################################### CD8 sub-population #####################################
@@ -355,3 +396,29 @@ sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], source_subPop
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], resNetCalibSubPop[:,marker1], resNetCalibSubPop[:,marker2], axis1, axis2)
 # after calibration using MLP (no shortcut connections)
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], mlpCalibSubPop[:,marker1], mlpCalibSubPop[:,marker2], axis1, axis2)
+'''
+MMD before calibration:         0.841001570225pm 0.00943872899182
+MMD after calibration (resNet): 0.179643982649pm 0.00798733070794
+MMD after calibration (MLP):    0.223315265775pm 0.00818621049659
+MMD target-target:              0.131876702607pm 0.00437303984632
+
+MMD before calibration:         0.764193499088pm 0.0134300033042
+MMD after calibration (resNet): 0.16910096705pm 0.0142499844524
+MMD after calibration (MLP):    0.165552330017pm 0.00997101295181
+MMD target-target:              0.124726036191pm 0.00636838728416
+
+
+MMD before calibration:         0.808711016178pm 0.0269931302713
+MMD after calibration (resNet): 0.174096992612pm 0.00680870609821
+MMD after calibration (MLP):    0.265168428421pm 0.00993624954871
+MMD target-target:              0.13444621563pm 0.00741182445296
+
+MMD before calibration:         0.891628968716pm 0.0268915575951
+MMD after calibration (resNet): 0.191109094024pm 0.0213080492259
+MMD after calibration (MLP):    0.303352743387pm 0.0216603426489
+MMD target-target:              0.124117201567pm 0.00502148814178
+
+'''
+
+# KS-test
+

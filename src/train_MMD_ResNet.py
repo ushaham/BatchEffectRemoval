@@ -14,7 +14,15 @@ from keras import callbacks as cb
 import numpy as np
 import matplotlib
 from keras.layers.normalization import BatchNormalization
-matplotlib.use('TkAgg')
+#detect display
+import os
+havedisplay = "DISPLAY" in os.environ
+#if we have a display use a plotting backend
+if havedisplay:
+    matplotlib.use('TkAgg')
+else:
+    matplotlib.use('Agg')
+
 import CostFunctions as cf
 import Monitoring as mn
 from keras.regularizers import l2
@@ -25,6 +33,9 @@ import ScatterHist as sh
 from keras import initializations
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
+import tensorflow as tf
+import keras.backend as K
+
 
 # configuration hyper parameters
 denoise = True # whether or not to train a denoising autoencoder to remove the zeros
@@ -47,7 +58,7 @@ def my_init (shape, name = None):
 #######################
 # we load two CyTOF samples 
 
-data = 'person1_baseline'
+data = 'person1_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -79,6 +90,7 @@ inputDim = target.shape[1]
 
 if denoise:
     trainTarget_ae = np.concatenate([source[toKeepS], target[toKeepT]], axis=0)
+    np.random.shuffle(trainTarget_ae)
     trainData_ae = trainTarget_ae * np.random.binomial(n=1, p=keepProb, size = trainTarget_ae.shape)
     input_cell = Input(shape=(inputDim,))
     encoded = Dense(ae_encodingDim, activation='relu',W_regularizer=l2(l2_penalty_ae))(input_cell)
@@ -141,6 +153,8 @@ optimizer = keras.optimizers.rmsprop(lr=0.0)
 
 calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
                cf.MMD(block3_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+K.get_session().run(tf.global_variables_initializer())
+
 sourceLabels = np.zeros(source.shape[0])
 calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate, mn.monitorMMD(source, target, calibMMDNet.predict),

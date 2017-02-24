@@ -26,6 +26,14 @@ from keras import initializations
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
 from keras.models import load_model
+import os
+havedisplay = "DISPLAY" in os.environ
+#if we have a display use a plotting backend
+if havedisplay:
+    matplotlib.use('TkAgg')
+else:
+    matplotlib.use('Agg')
+
 
 
 # configuration hyper parameters
@@ -49,11 +57,11 @@ def my_init (shape, name = None):
 #######################
 # we load two CyTOF samples 
 
-sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
-targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
+#sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day2_baseline.csv')
+#targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day2_baseline.csv')
 # To train the net p1d1 --> p2d1, change the two lines above to:
-#sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
-#targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
+sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
+targetPath = os.path.join(io.DeepLearningRoot(),'Data/Person2Day1_baseline.csv')
 
 
 source = genfromtxt(sourcePath, delimiter=',', skip_header=0)
@@ -64,11 +72,11 @@ target = dh.preProcessCytofData(target)
 source = dh.preProcessCytofData(source) 
 
 if denoise:
-    autoencoder_s =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
-    autoencoder_t =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))
+    #autoencoder_s =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
+    #autoencoder_t =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))
     # To train the net p1d1 --> p2d1, change the two lines above to:
-    #autoencoder_s =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
-    #autoencoder_t =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
+    autoencoder_s =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person1_baseline_DAE.h5'))  
+    autoencoder_t =  load_model(os.path.join(io.DeepLearningRoot(),'savedModels/person2_baseline_DAE.h5'))  
     source = autoencoder_s.predict(source)
     target = autoencoder_t.predict(target)
 
@@ -125,6 +133,8 @@ optimizer = keras.optimizers.rmsprop(lr=0.0)
 
 calibMMDNet.compile(optimizer=optimizer, loss=lambda y_true,y_pred: 
                cf.MMD(block3_output,target,MMDTargetValidation_split=0.1).KerasCost(y_true,y_pred))
+K.get_session().run(tf.global_variables_initializer())
+
 sourceLabels = np.zeros(source.shape[0])
 calibMMDNet.fit(source,sourceLabels,nb_epoch=500,batch_size=1000,validation_split=0.1,verbose=1,
            callbacks=[lrate, mn.monitorMMD(source, target, calibMMDNet.predict),

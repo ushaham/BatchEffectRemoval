@@ -263,9 +263,9 @@ print('patient 1: MMD to p1d2 after calibration (short path): ' + str(np.mean(mm
 print('patient 1: MMD to p1d2 after calibration (long path):  ' + str(np.mean(mmd_after_long))+'pm '+str(np.std(mmd_after_long)))
 
 '''
-patient 1: MMD to p1d2 before calibration:             0.691462516785pm 0.00192805712724
-patient 1: MMD to p1d2 after calibration (short path): 0.277334314585pm 0.000277815282248
-patient 1: MMD to p1d2 after calibration (long path):  0.298864048719pm 0.00012550726952
+patient 1: MMD to p1d2 before calibration:             0.635122966766pm 0.00203979978873
+patient 1: MMD to p1d2 after calibration (short path): 0.197238990664pm 1.2257092688e-05
+patient 1: MMD to p1d2 after calibration (long path):  0.209166684747pm 3.77262037173e-05
 '''
 
 ##################################### CD8 sub-population #####################################

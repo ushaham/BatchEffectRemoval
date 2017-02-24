@@ -22,6 +22,8 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers import Input, Dense, merge, Activation
 from keras.regularizers import l2
 from keras.models import Model
+import scipy
+from matplotlib import pyplot as plt
 
 
 
@@ -33,7 +35,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person2_3month'
+data = 'person2_baseline'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -182,6 +184,31 @@ calibratedTarget_pca = combinedDataRecon[:n_target,]
 calibratedSource_pca = combinedDataRecon[n_target:,]
 # MMD with the a single scale at a time, for various scales
 
+
+####################
+###### Combat ######
+####################
+if data =='person1_baseline':
+    CombatPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person1_baseline_Combat.csv')
+    BatchPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person1_baseline_batch.csv')
+if data =='person2_baseline':
+    CombatPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person2_baseline_Combat.csv')
+    BatchPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person2_baseline_batch.csv')
+if data =='person1_3month':
+    CombatPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person1_3month_Combat.csv')
+    BatchPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person1_3month_batch.csv')
+if data =='person2_3month':
+    CombatPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person2_3month_Combat.csv')
+    BatchPath = os.path.join(io.DeepLearningRoot(),'fromJun/Person2_3month_batch.csv')            
+
+combatData = genfromtxt(CombatPath, delimiter=',', skip_header=0)
+combatBatch = genfromtxt(BatchPath, delimiter=',', skip_header=0)
+calibratedSource_combat = combatData[combatBatch==1]
+calibratedTarget_combat = combatData[combatBatch==2]
+
+calibratedSource_combat = preprocessor.transform(calibratedSource_combat)
+calibratedTarget_combat = preprocessor.transform(calibratedTarget_combat)
+
 ##############################################
 ############## Evaluation: MMD ###############
 ##############################################
@@ -190,6 +217,7 @@ mmd_before = np.zeros(5)
 mmd_after_Z = np.zeros(5)
 mmd_after_pca = np.zeros(5)
 mmd_after_resNet = np.zeros(5)
+mmd_after_combat = np.zeros(5)
 
 for i in range(5):
     sourceInds = np.random.randint(low=0, high = source.shape[0], size = 1000)
@@ -197,39 +225,45 @@ for i in range(5):
     mmd_before[i] = K.eval(cf.MMD(source,target).cost(K.variable(value=source[sourceInds]), K.variable(value=target[targetInds])))
     mmd_after_Z[i] = K.eval(cf.MMD(calibratedSource_Z,target).cost(K.variable(value=calibratedSource_Z[sourceInds]), K.variable(value=target[targetInds])))
     mmd_after_pca[i] = K.eval(cf.MMD(calibratedSource_pca,calibratedTarget_pca).cost(K.variable(value=calibratedSource_pca[sourceInds]), K.variable(value=calibratedTarget_pca[targetInds])))
+    mmd_after_combat[i] = K.eval(cf.MMD(calibratedSource_combat,calibratedTarget_combat).cost(K.variable(value=calibratedSource_combat[sourceInds]), K.variable(value=calibratedTarget_combat[targetInds])))
     mmd_after_resNet[i] = K.eval(cf.MMD(calibratedSource_resNet,target).cost(K.variable(value=calibratedSource_resNet[sourceInds]), K.variable(value=target[targetInds])))
 
 
 print('MMD before calibration:          ' + str(np.mean(mmd_before))+'pm '+str(np.std(mmd_before)))
 print('MMD after calibration (Z):       ' + str(np.mean(mmd_after_Z))+'pm '+str(np.std(mmd_after_Z)))
 print('MMD after calibration (PCA):     ' + str(np.mean(mmd_after_pca))+'pm '+str(np.std(mmd_after_pca)))
+print('MMD after calibration (Combat):  ' + str(np.mean(mmd_after_combat))+'pm '+str(np.std(mmd_after_combat)))
 print('MMD after calibration (resNet):  ' + str(np.mean(mmd_after_resNet))+'pm '+str(np.std(mmd_after_resNet)))
 
 
 '''
 patient 1_baseline:
-MMD before calibration:          0.658845198154pm 0.0275670921996
-MMD after calibration (Z):       0.2682092309  pm 0.0149490092399
-MMD after calibration (PCA):     0.382372808456pm 0.0214676670154
-MMD after calibration (resNet):  0.273605012894pm 0.0191134302195
+MMD before calibration:          0.638668644428pm 0.014563096906
+MMD after calibration (Z):       0.276640373468pm 0.012924549692
+MMD after calibration (PCA):     0.402770000696pm 0.0136063583736
+MMD after calibration (Combat):  0.277381533384pm 0.014350908313
+MMD after calibration (resNet):  0.191800534725pm 0.00762761862609
 
 patient 2_baseline:
-MMD before calibration:          0.566467106342pm 0.00920023819038
-MMD after calibration (Z):       0.252539759874pm 0.00326543598136
-MMD after calibration (PCA):     0.390312641859pm 0.0128401136905
-MMD after calibration (resNet):  0.182156163454pm 0.0105230273331
+MMD before calibration:          0.555728244781pm 0.00789111145345
+MMD after calibration (Z):       0.265854990482pm 0.0155749355254
+MMD after calibration (PCA):     0.401724106073pm 0.0125636161256
+MMD after calibration (Combat):  0.255779594183pm 0.0045216242106
+MMD after calibration (resNet):  0.164374938607pm 0.00615682418355
 
 patient 1_3month:
-MMD before calibration:          0.591536152363pm 0.0124899670656
-MMD after calibration (Z):       0.302636575699pm 0.00507544229121
-MMD after calibration (PCA):     0.441723245382pm 0.0130247356724
-MMD after calibration (resNet):  0.252806773782pm 0.0139724251926
+MMD before calibration:          0.623963487148pm 0.0187013509273
+MMD after calibration (Z):       0.292916560173pm 0.015575261872
+MMD after calibration (PCA):     0.359512370825pm 0.0111780519185
+MMD after calibration (Combat):  0.297321844101pm 0.0142308482008
+MMD after calibration (resNet):  0.194353529811pm 0.0104502178413
 
 patient 2_3month:
-MMD before calibration:          0.691931259632pm 0.0210479195603
-MMD after calibration (Z):       0.308583420515pm 0.0111125870826
-MMD after calibration (PCA):     0.379308360815pm 0.0139506508277
-MMD after calibration (resNet):  0.179382380843pm 0.0092942939681
+MMD before calibration:          0.659076714516pm 0.00553641512917
+MMD after calibration (Z):       0.296549755335pm 0.00929416024482
+MMD after calibration (PCA):     0.367381608486pm 0.0094637884607
+MMD after calibration (Combat):  0.293218165636pm 0.00663473122269
+MMD after calibration (resNet):  0.197239124775pm 0.00868047602136
 
 
 '''
@@ -252,6 +286,8 @@ pc2 = 2
 projection_after_z = pca.transform(calibratedSource_Z)
 target_after_pca = pca.transform(calibratedTarget_pca)
 projection_after_pca = pca.transform(calibratedSource_pca)
+target_after_combat = pca.transform(calibratedTarget_combat)
+projection_after_combat = pca.transform(calibratedSource_combat)
 projection_after_net = pca.transform(calibratedSource_resNet)
 
 # no calibration
@@ -260,6 +296,8 @@ sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_be
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_z[:,pc1], projection_after_z[:,pc2])
 # PCA calibration
 sh.scatterHist(target_after_pca[:,pc1], target_after_pca[:,pc2], projection_after_pca[:,pc1], projection_after_pca[:,pc2])
+# Combat calibration
+sh.scatterHist(target_after_combat[:,pc1], target_after_combat[:,pc2], projection_after_combat[:,pc1], projection_after_combat[:,pc2])
 #ResNet calibration
 sh.scatterHist(target_sample_pca[:,pc1], target_sample_pca[:,pc2], projection_after_net[:,pc1], projection_after_net[:,pc2])
 
@@ -287,3 +325,25 @@ sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], Z_CalibSubPop
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], pca_CalibSubPop[:,marker1], pca_CalibSubPop[:,marker2], axis1, axis2)
 # ResNet calibration
 sh.scatterHist(target_subPop[:,marker1], target_subPop[:,marker2], resNetCalibSubPop[:,marker1], resNetCalibSubPop[:,marker2], axis1, axis2)
+
+
+
+
+
+# KS test
+d = source.shape[1]
+pVals = np.zeros((d,5))
+for i in range(d):
+    pVals[i,0] = scipy.stats.ks_2samp(source[:,i], target[:,i])[1]
+    pVals[i,1] = scipy.stats.ks_2samp(calibratedSource_Z[:,i], target[:,i])[1]
+    pVals[i,2] = scipy.stats.ks_2samp(calibratedSource_pca[:,i], calibratedTarget_pca[:,i])[1]
+    pVals[i,3] = scipy.stats.ks_2samp(calibratedSource_combat[:,i], calibratedTarget_combat[:,i])[1]
+    pVals[i,4] = scipy.stats.ks_2samp(calibratedSource_resNet[:,i], target[:,i])[1]
+fig, (a1)  = plt.subplots(1,1)
+a1.hist(pVals, normed=True) 
+#plt.legend(['no calibration', 'mean, var maching','PCA', 'MMD-ResNet'],prop={'size':16})
+plt.legend(['no calibration', 'mean, var maching','PCA', 'Combat', 'MMD-ResNet'])
+a1.axes.get_yaxis().set_visible(False)
+plt.show()  
+    
+ 
