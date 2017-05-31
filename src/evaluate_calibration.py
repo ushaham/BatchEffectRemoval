@@ -203,7 +203,7 @@ markerNames = ['CD45', 'CD19', 'CD127', 'CD4',
                  'CD28', 'CD152', 'FOXP3', 'CD45RO', 'Beads-INFg',
                   'CD223', 'GzB', 'CD3', 'CD274', 'HLADR', 'Beads-PD1',
                    'CD11b']
-for i in range(np.min([10,target.shape[1]])):
+for i in range(3):#np.min([10,target.shape[1]])):
     targetMarker = target[:,i]
     beforeMarker = source[:,i]
     afterMarker = calibratedSource_resNet[:,i]
@@ -218,9 +218,12 @@ for i in range(np.min([10,target.shape[1]])):
     af_ecdf = after_ecdf(x)    
     fig = plt.figure()
     a1 = fig.add_subplot(111)
-    a1.plot(tgt_ecdf, color = 'blue') 
-    a1.plot(bf_ecdf, color = 'red') 
-    a1.plot(af_ecdf, color = 'green') 
+    a1.plot(tgt_ecdf, '-', color = 'black') 
+    a1.plot(bf_ecdf, '--', color = 'black') 
+    a1.plot(af_ecdf, ':', color = 'black') 
+    #a1.plot(tgt_ecdf, color = 'blue') 
+    #a1.plot(bf_ecdf, color = 'red') 
+    #a1.plot(af_ecdf, color = 'green') 
     a1.set_xticklabels([])
     plt.legend(['target', 'before calibration', 'after calibration'], loc=0 ,prop={'size':16})
     plt.title(markerNames[i])

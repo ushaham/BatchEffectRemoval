@@ -8,7 +8,7 @@ import os.path
 import keras.optimizers
 from Calibration_Util import DataHandler as dh 
 from Calibration_Util import FileIO as io
-from keras.layers import Input, Dense, merge, Activation
+from keras.layers import Input, Dense, merge, Activation, add
 from keras.models import Model
 from keras import callbacks as cb
 import numpy as np
@@ -30,7 +30,7 @@ from sklearn import decomposition
 from keras.callbacks import LearningRateScheduler
 import math
 import ScatterHist as sh
-from keras import initializations
+from keras import initializers
 from numpy import genfromtxt
 import sklearn.preprocessing as prep
 import tensorflow as tf
@@ -38,7 +38,7 @@ import keras.backend as K
 
 
 # configuration hyper parameters
-denoise = True # whether or not to train a denoising autoencoder to remove the zeros
+denoise = False # whether or not to train a denoising autoencoder to remove the zeros
 keepProb=.8
 
 # AE confiduration
@@ -49,8 +49,8 @@ l2_penalty_ae = 1e-2
 mmdNetLayerSizes = [25, 25]
 l2_penalty = 1e-2
 #init = lambda shape, name:initializations.normal(shape, scale=.1e-4, name=name)
-def my_init (shape, name = None):
-    return initializations.normal(shape, scale=.1e-4, name=name)
+#def my_init (shape):
+#    return initializers.normal(stddev=.1e-4)
 #my_init = 'glorot_normal'
 
 #######################
@@ -117,27 +117,33 @@ target = preprocessor.transform(target)
 calibInput = Input(shape=(inputDim,))
 block1_bn1 = BatchNormalization()(calibInput)
 block1_a1 = Activation('relu')(block1_bn1)
-block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a1) 
+block1_w1 = Dense(mmdNetLayerSizes[0], activation='linear',kernel_regularizer=l2(l2_penalty), 
+                  kernel_initializer=initializers.RandomNormal(stddev=1e-4))(block1_a1) 
 block1_bn2 = BatchNormalization()(block1_w1)
 block1_a2 = Activation('relu')(block1_bn2)
-block1_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block1_a2) 
-block1_output = merge([block1_w2, calibInput], mode = 'sum')
+block1_w2 = Dense(inputDim, activation='linear',kernel_regularizer=l2(l2_penalty),
+                  kernel_initializer=initializers.RandomNormal(stddev=1e-4))(block1_a2) 
+block1_output = add([block1_w2, calibInput])
 block2_bn1 = BatchNormalization()(block1_output)
 block2_a1 = Activation('relu')(block2_bn1)
-block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a1) 
+block2_w1 = Dense(mmdNetLayerSizes[1], activation='linear',kernel_regularizer=l2(l2_penalty), 
+                  kernel_initializer=initializers.RandomNormal(stddev=1e-4))(block2_a1) 
 block2_bn2 = BatchNormalization()(block2_w1)
 block2_a2 = Activation('relu')(block2_bn2)
-block2_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block2_a2) 
-block2_output = merge([block2_w2, block1_output], mode = 'sum')
+block2_w2 = Dense(inputDim, activation='linear',kernel_regularizer=l2(l2_penalty), 
+                  kernel_initializer=initializers.RandomNormal(stddev=1e-4))(block2_a2) 
+block2_output = add([block2_w2, block1_output])
 block3_bn1 = BatchNormalization()(block2_output)
 block3_a1 = Activation('relu')(block3_bn1)
-block3_w1 = Dense(mmdNetLayerSizes[1], activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a1) 
+block3_w1 = Dense(mmdNetLayerSizes[1], activation='linear',kernel_regularizer=l2(l2_penalty), 
+                  kernel_initializer=initializers.RandomNormal(stddev=1e-4))(block3_a1) 
 block3_bn2 = BatchNormalization()(block3_w1)
 block3_a2 = Activation('relu')(block3_bn2)
-block3_w2 = Dense(inputDim, activation='linear',W_regularizer=l2(l2_penalty), init = my_init)(block3_a2) 
-block3_output = merge([block3_w2, block2_output], mode = 'sum')
+block3_w2 = Dense(inputDim, activation='linear',kernel_regularizer=l2(l2_penalty), 
+                  kernel_initializer=initializers.RandomNormal(stddev=1e-4))(block3_a2) 
+block3_output = add([block3_w2, block2_output])
 
-calibMMDNet = Model(input=calibInput, output=block3_output)
+calibMMDNet = Model(inputs=calibInput, outputs=block3_output)
 
 # learning rate schedule
 def step_decay(epoch):

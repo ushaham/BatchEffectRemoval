@@ -9,6 +9,7 @@ from Calibration_Util import DataHandler as dh
 from Calibration_Util import FileIO as io
 import numpy as np
 import matplotlib
+from matplotlib.colors import Colormap
 matplotlib.use('TkAgg')
 import CostFunctions as cf
 from sklearn import decomposition
@@ -35,7 +36,7 @@ denoise = True # whether or not to use a denoising autoencoder to remove the zer
 ######################
 # we load two CyTOF samples 
 
-data = 'person2_baseline'
+data = 'person2_3month'
 
 if data =='person1_baseline':
     sourcePath = os.path.join(io.DeepLearningRoot(),'Data/Person1Day1_baseline.csv')
@@ -340,7 +341,18 @@ for i in range(d):
     pVals[i,3] = scipy.stats.ks_2samp(calibratedSource_combat[:,i], calibratedTarget_combat[:,i])[1]
     pVals[i,4] = scipy.stats.ks_2samp(calibratedSource_resNet[:,i], target[:,i])[1]
 fig, (a1)  = plt.subplots(1,1)
-a1.hist(pVals, normed=True) 
+#a1.hist(pVals, normed=True)
+cm = plt.cm.get_cmap('Greys')
+
+# Plot histogram.
+n, bins, patches = plt.hist(pVals, 10, normed=1)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
 #plt.legend(['no calibration', 'mean, var maching','PCA', 'MMD-ResNet'],prop={'size':16})
 plt.legend(['no calibration', 'mean, var maching','PCA', 'Combat', 'MMD-ResNet'])
 a1.axes.get_yaxis().set_visible(False)

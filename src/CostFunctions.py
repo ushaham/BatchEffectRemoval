@@ -15,7 +15,7 @@ FloatType = 'float32'
 def squaredDistance(X,Y):
     # X is nxd, Y is mxd, returns nxm matrix of all pairwise Euclidean distances
     # broadcasted subtraction, a square, and a sum.
-    r = K.expand_dims(X, dim=1)
+    r = K.expand_dims(X, axis=1)
     return K.sum(K.square(r-Y), axis=-1)
 
 class MMD:
@@ -91,12 +91,12 @@ class MMD:
     def KerasCost(self,y_true, y_pred):
         #create a random subsampling of the target instances for the test set
         #This is rarely going to hit the last entry
-        sample = K.cast(K.round(K.random_uniform(shape=tuple([self.MMDTargetSampleSize]), low=0, 
+        sample = K.cast(K.round(K.random_uniform_variable(shape=tuple([self.MMDTargetSampleSize]), low=0, 
                                                  high=self.MMDTargetTrainSize-1)),IntType)
         #this is a subset operation (not a very pretty way to do it)
         MMDTargetSampleTrain = K.gather(self.MMDTargetTrain,sample)
         #do the same for the validation set
-        sample = K.cast(K.round(K.random_uniform(shape=tuple([self.MMDTargetSampleSize]), low=0, 
+        sample = K.cast(K.round(K.random_uniform_variable(shape=tuple([self.MMDTargetSampleSize]), low=0, 
                                                  high=self.MMDTargetValidationSize-1)),IntType)
         #and the subset operation
         MMDTargetSampleValidation = K.gather(self.MMDTargetValidation,sample)
