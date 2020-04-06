@@ -13,3 +13,5 @@ All the models used to produce the results in the manuscript are saved in savedM
 
 
 Any questions should be referred to Uri Shaham, uri.shaham@yale.edu.
+
+**Update April 7th 2020: A PyTorch implementation of the code can be found in https://github.com/ushaham/batchEffectRemoval2020.**
